@@ -1,0 +1,5 @@
+load bikes.maude
+
+frew [10000] execute(t10U100B, init) .
+eof
+frew [1000] execute(t100U1000B, init) .

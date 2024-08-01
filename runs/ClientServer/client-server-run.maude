@@ -1,0 +1,4 @@
+load client-server.maude
+
+frew [1000] execute(tcSingleClient, init) .
+frew [1000] execute(tcMultipleClients, init) .

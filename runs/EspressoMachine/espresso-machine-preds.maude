@@ -1,0 +1,36 @@
+sload espresso-machine.maude 
+
+mod ESPRESSO-MACHINE-PREDS is
+  inc ESPRESSO-MACHINE-RUN .
+
+  sort State .
+  subsort SystemExecState < State .
+  
+  vars MId MId' : MachId .
+  vars Events Events' : Queue{Event} .
+  vars CS CS' : [CodeStack] .
+  vars FS FS' : Set{Function} .
+  vars MS MS' : MemoryStack .
+  var  MM : Memory .
+  var  N : Nat .
+  var  ES : ExecState .
+  var  S : Nat .
+  var  Sys : System .
+  var  Log : String .
+  vars M X Y Id : Name .
+  vars Expr : [Expr] .
+  var  EN : EventName .
+  var  State : State .
+  vars DEs IEs : Set{EventName} .
+  var  SES : SystemExecState .
+  var  St : tCoffeeMakerState .
+
+  op done : State -> Bool .
+  eq done([ [ MId, SaneUser, Id, Events, Events', CS, FS, DEs, IEs, MS <m| MM [cups -> 0]] ES, S, Sys, Log ]) = true .
+  eq done(SES) = false [owise] .
+  
+  op state : State tCoffeeMakerState -> Bool . ----   NotWarmedUp, Ready, NoBeansError, NoWaterError
+  eq state([ [ MId, CoffeeMakerControlPanel, Id, Events, Events', CS, FS, DEs, IEs, MM [cofferMakerState -> St]] ES, S, Sys, Log ], St) = true .
+  eq state(SES, St) = false [owise] .
+endm
+

@@ -1,0 +1,1874 @@
+------------------------------------------------------------------------------------
+---- File: p.maude
+---- Author: Francisco Duran
+---- Tested on Maude alpha162
+---- Version: 0.4
+---- Created: July 19th, 2024
+---- Last modified: July 19th, 2024
+---- Status:  Working version
+----
+---- changes for the client-server example (without the abstract bank)
+------------------------------------------------------------------------------------ 
+
+load p-type-system-0.5.maude
+
+------------------------------------------------------------------------------------ 
+
+fmod MAYBE{X :: TRIV} is 
+  sort Maybe{X} .
+  subsort X$Elt < Maybe{X} . 
+  op noValue : -> Maybe{X} .
+endfm
+
+view Maybe{X :: TRIV} from TRIV to MAYBE{X} is 
+  sort Elt to Maybe{X} .
+endv
+
+------------------------------------------------------------------------------------ 
+
+fmod TUPLE2{X :: TRIV, Y :: TRIV} is 
+  sort Tuple{X, Y} .
+  op ((_,_)) : X$Elt Y$Elt -> Tuple{X, Y} .
+  op p1_ : Tuple{X, Y} -> X$Elt [gather (&)] .
+  op p2_ : Tuple{X, Y} -> Y$Elt [gather (&)] .
+  var E1 : X$Elt .
+  var E2 : Y$Elt .
+  eq p1 (E1, E2) = E1 .
+  eq p2 (E1, E2) = E2 .
+endfm
+
+view Tuple2{X :: TRIV, Y :: TRIV} from TRIV to TUPLE2{X, Y} is 
+  sort Elt to Tuple{X, Y} .
+endv
+
+------------------------------------------------------------------------------------ 
+
+fmod TUPLE3{X :: TRIV, Y :: TRIV, Z :: TRIV} is 
+  sort Tuple{X, Y, Z} .
+  op ((_,_,_)) : X$Elt Y$Elt Z$Elt -> Tuple{X, Y, Z} .
+  op p1_ : Tuple{X, Y, Z} -> X$Elt [gather (&)] .
+  op p2_ : Tuple{X, Y, Z} -> Y$Elt [gather (&)] .
+  op p3_ : Tuple{X, Y, Z} -> Z$Elt [gather (&)] .
+  var E1 : X$Elt .
+  var E2 : Y$Elt .
+  var E3 : Z$Elt .
+  eq p1 (E1, E2, E3) = E1 .
+  eq p2 (E1, E2, E3) = E2 .
+  eq p3 (E1, E2, E3) = E3 .
+endfm
+
+view Tuple3{X :: TRIV, Y :: TRIV, Z :: TRIV} from TRIV to TUPLE3{X, Y, Z} is 
+  sort Elt to Tuple{X, Y, Z} .
+endv
+
+------------------------------------------------------------------------------------ 
+
+fmod TUPLE5{V :: TRIV, W :: TRIV, X :: TRIV, Y :: TRIV, Z :: TRIV} is 
+  sort Tuple{V, W, X, Y, Z} .
+  op ((_,_,_,_,_)) : V$Elt W$Elt X$Elt Y$Elt Z$Elt -> Tuple{V, W, X, Y, Z} .
+  op p1_ : Tuple{V, W, X, Y, Z} -> V$Elt [gather (&)] .
+  op p2_ : Tuple{V, W, X, Y, Z} -> W$Elt [gather (&)] .
+  op p3_ : Tuple{V, W, X, Y, Z} -> X$Elt [gather (&)] .
+  op p4_ : Tuple{V, W, X, Y, Z} -> Y$Elt [gather (&)] .
+  op p5_ : Tuple{V, W, X, Y, Z} -> Z$Elt [gather (&)] .
+  var E1 : V$Elt .
+  var E2 : W$Elt .
+  var E3 : X$Elt .
+  var E4 : Y$Elt .
+  var E5 : Z$Elt .
+  eq p1 (E1, E2, E3, E4, E5) = E1 .
+  eq p2 (E1, E2, E3, E4, E5) = E2 .
+  eq p3 (E1, E2, E3, E4, E5) = E3 .
+  eq p4 (E1, E2, E3, E4, E5) = E4 .
+  eq p5 (E1, E2, E3, E4, E5) = E5 .
+endfm
+
+view Tuple5{V :: TRIV, W :: TRIV, X :: TRIV, Y :: TRIV, Z :: TRIV} from TRIV to TUPLE5{V, W, X, Y, Z} is 
+  sort Elt to Tuple{V, W, X, Y, Z} .
+endv
+
+------------------------------------------------------------------------------------ 
+
+fmod ID is 
+  pr P-TYPE .
+  sorts MachId ---- machine identifiers (id(0), id(1), ...)
+        MachVarId FloatVarId IntVarId StringVarId BoolVarId MapVarId SeqVarId SetVarId VarId ---- var names
+        Name ---- machine names (Dice, Bike, ...)
+        .
+  subsort MachId < UniversalType .
+  subsorts PVoid < IntVarId FloatVarId StringVarId BoolVarId MapVarId SeqVarId SetVarId MachVarId 
+                 < VarId .
+  ---- subsort PVoid < Name . ---- TODO: clean up the type structure
+  op id : [Nat] -> MachId .
+----  op _._ : PVoid Name -> PVoid .
+endfm
+
+view Name from TRIV to ID is
+  sort Elt to Name .
+endv 
+
+view MachId from TRIV to ID is
+  sort Elt to MachId .
+endv 
+
+------------------------------------------------------------------------------------ 
+
+---(
+type : 
+ | bool                         # PrimitiveType
+ | int                          # PrimitiveType
+ | float                        # PrimitiveType
+ | string                       # PrimitiveType
+ | event                        # PrimitiveType
+ | machine                      # PrimitiveType
+
+ | (type (, type)*)             # TupleType
+ | (iden: type (, iden: type)*) # NamedTupleType
+
+ | seq[type]                    # SeqType
+ | set[type]                    # SetType
+ | map[type, type]              # MapType
+
+ | data                         # UniversalType
+ | any                          # UniversalType
+
+ | iden                         # UserDefinedType
+ ;
+)
+fmod DATATYPE is 
+  pr ID .
+  pr P-TYPE .
+
+  sort UserDefinedTypeName TypeName TypeNameSequence .
+  subsort UserDefinedTypeName < TypeName < TypeNameSequence .
+  ops bool int float string event machine : -> TypeName .
+  op _,_ : TypeNameSequence TypeNameSequence -> TypeNameSequence [assoc] .
+  op ((_)) : TypeNameSequence -> TypeName .
+  op ((_)) : NamedTypeSequence -> TypeName .
+  sorts NamedType NamedTypeSequence .
+  subsort NamedType < NamedTypeSequence .
+  op _:_ : VarId TypeName -> NamedType [prec 30] . 
+----  op _:_ : MachVarId Name -> NamedType [prec 30] . 
+  op mtNamedTypeSequence : -> NamedTypeSequence .
+  op _,_ : NamedTypeSequence NamedTypeSequence -> NamedTypeSequence [assoc id: mtNamedTypeSequence prec 32 gather (e E)] .
+  op seq[_] : TypeName -> TypeName .
+  op set[_] : TypeName -> TypeName .
+  op map[_,_] : TypeName TypeName -> TypeName .
+  op data : -> TypeName .
+  op any : -> TypeName .
+endfm
+
+view TypeName from TRIV to DATATYPE is 
+  sort Elt to TypeName .
+endv
+
+------------------------------------------------------------------------------------ 
+
+fmod EVENT-NAME is 
+  sort EventName .
+endfm
+
+view EventName from TRIV to EVENT-NAME is 
+  sort Elt to EventName .
+endv
+
+fmod EXPR-TYPE is 
+  sort Expr .
+endfm 
+
+view Expr from TRIV to EXPR-TYPE is 
+  sort Elt to Expr .
+endv 
+
+fmod MEMORY is
+  pr CONVERSION .
+  pr SEQ-TYPE .
+  pr MAYBE{UniversalType} .
+  pr ID .
+  pr EVENT-NAME .
+  pr EXPR-TYPE .
+
+  sorts Memory MemoryStack .
+  subsort Memory < MemoryStack .
+  op mtMemory : -> Memory .
+  op noMemory : -> MemoryStack .
+  op __ : Memory Memory -> Memory [assoc comm id: mtMemory prec 31] .
+  op _<m|_ : MemoryStack MemoryStack -> MemoryStack [assoc prec 56 gather (e E)] .
+  op [_->_] : VarId Maybe{UniversalType} -> Memory .
+  op [_->_] : VarId EventName -> Memory .
+----  op [_->_] : MachVarId Maybe{MachId} -> Memory .
+
+  var  VId : VarId .
+  var  MachVId : MachVarId .
+  var  MVId : MapVarId .
+  vars Value Value' : UniversalType .
+  var  Value? MachId? : Maybe{UniversalType} .
+  var  MachId : MachId .
+  var  MM : Memory .
+  var  MS : MemoryStack .
+  var  I : Int .
+  var  MV MapE : Map{UniversalType,UniversalType} .
+  var  SeqV : SeqVarId .
+  var  SetV : SetVarId .
+  var  MapV : MapVarId .
+  var  SeqE : List{UniversalType} .
+----  var  SetE : Set{UniversalType} .
+  var  SetE : List{UniversalType} .
+  var  EN : EventName .
+  vars E E' E'' : Expr .
+
+  op getV : VarId MemoryStack -> UniversalType .
+  op getEN : VarId MemoryStack -> EventName .
+  op setV : VarId UniversalType MemoryStack -> MemoryStack .
+
+  op getMach : MachId MemoryStack -> MachId .
+  op getMach : MachVarId MemoryStack -> MachId .
+  op setMach : MachVarId MachId MemoryStack -> MemoryStack .
+
+  op getMap : MapVarId Int MemoryStack -> UniversalType .
+----  op setMap : MapVarId Int UniversalType MemoryStack -> MemoryStack .
+  op setMap : MapVarId UniversalType UniversalType MemoryStack -> MemoryStack .
+  
+  ---- TODO: Can there be homonymous variables in nested contexts? It is not 
+  ----       currently handled. All variables in an event handler are managed 
+  ----       as a set, and if the variable is not local to that handler or 
+  ----       function, then the machine variables are attempted. If so, memory 
+  ----       could be just assoc, and look for variables sequentially. 
+
+  eq getV(VId, [VId -> Value] MM <m| MS) = Value .
+  eq getV(VId, MS <m| [VId -> Value] MM) = Value [owise] .
+
+  eq getEN(VId, [VId -> EN] MM <m| MS) = EN .
+  eq getEN(VId, MS <m| [VId -> EN] MM) = EN [owise] .
+
+  eq getMach(MachId, MS) = MachId .
+  eq getMach(MachVId, [MachVId -> MachId] MM <m| MS) = MachId .
+  eq getMach(MachVId, MS <m| [MachVId -> MachId] MM) = MachId [owise] .
+
+  eq getMap(MVId, Value, [MVId -> map{ MV }] MM <m| MS) = MV[Value] .
+  eq getMap(MVId, Value, MS <m| [MVId -> map{ MV }] MM) = MV[Value] [owise] .
+
+  op getSeq : SeqVarId Int MemoryStack -> UniversalType .
+  eq getSeq(SeqV, I, [SeqV -> seq{ SeqE }] MM <m| MS) = getSeq(I, SeqE) .
+  eq getSeq(SeqV, I, MS <m| [SeqV -> seq{ SeqE }] MM) = getSeq(I, SeqE) [owise] .
+
+  op getSet : SetVarId Int MemoryStack -> UniversalType .
+  eq getSet(SetV, I, [SetV -> set{ SetE }] MM <m| MS) = getSet(I, SetE) .
+  eq getSet(SetV, I, MS <m| [SetV -> set{ SetE }] MM) = getSet(I, SetE) [owise] .
+
+  op setSeq : SeqVarId Int UniversalType MemoryStack -> MemoryStack .
+  eq setSeq(SeqV, I, Value, [SeqV -> seq{ SeqE }] MM <m| MS) 
+    = [SeqV -> seq{ setSeq(I, Value, SeqV) }] MM <m| MS .
+  eq setSeq(SeqV, I, Value, MS <m| [SeqV -> seq{ SeqE }] MM) 
+    = MS <m| [SeqV -> seq{ setSeq(I, Value, SeqV) }] MM [owise] .
+
+  eq setV(VId, Value, [VId -> Value?] MM <m| MS) = [VId -> Value] MM <m| MS .
+  eq setV(VId, Value, MS <m| [VId -> Value?] MM) = MS <m| [VId -> Value] MM [owise] .
+----  eq setV(VId, Value, mtMemory <m| [VId -> Value?] MM <m| MS) = [VId -> Value] MM <m| MS [owise] .
+
+  eq setMach(MachVId, MachId, [MachVId -> MachId?] MM <m| MS) 
+    = [MachVId -> MachId] MM <m| MS .
+  eq setMach(MachVId, MachId, MS <m| [MachVId -> MachId?] MM) 
+    = MS <m| [MachVId -> MachId] MM [owise] .
+
+  eq setMap(MVId, Value, Value', [MVId -> map{ MV }] MM <m| MS) 
+    = [MVId -> map{ insert(Value, Value', MV) }] MM <m| MS .
+  eq setMap(MVId, Value, Value', MS <m| [MVId -> map{ MV }] MM) 
+    = MS <m| [MVId -> map{ insert(Value, Value', MV) }] MM [owise] .
+
+  op insertS : VarId UniversalType MemoryStack -> MemoryStack .
+  eq insertS(SeqV, Value, [SeqV -> seq{SeqE}] MM <m| MS) = [SeqV -> seq{SeqE @ Value}] MM <m| MS .
+----  eq insertS(SetV, Value, [SetV -> set{SetE}] MM <m| MS) = [SetV -> set{(SetE # Value)}] MM <m| MS .
+  eq insertS(SetV, Value, [SetV -> set{SetE}] MM <m| MS) = [SetV -> set{(SetE @ Value)}] MM <m| MS .
+
+  op insert : VarId UniversalType UniversalType MemoryStack -> MemoryStack .
+  eq insert(SeqV, I, Value, [SeqV -> seq{SeqE}] MM <m| MS) = [SeqV -> seq{insertSeq(I, Value, SeqE)}] MM <m| MS .
+  eq insert(MapV, Value, Value', [MapV -> map{MapE}] MM <m| MS) = [MapV -> map{insert(Value, Value', MapE)}] MM <m| MS .
+endfm
+
+view MemoryStack from TRIV to MEMORY is
+  sort Elt to MemoryStack .
+endv
+
+mod EXPRESSION is 
+  pr TUPLE2{Expr, Nat} .
+  inc RANDOM .
+  pr CONVERSION .
+  pr MEMORY .
+  pr DATATYPE .
+
+  subsort UserDefinedType < Expr < UniversalType .
+
+----  op _._ : VarId VarId -> Expr [prec 15] .
+  op _._ : Expr VarId -> Expr [prec 15] .
+
+  sort ExprList .
+  subsort VarId < Expr < ExprList .
+  op mtExprList : -> ExprList .
+  op _,_ : ExprList ExprList -> ExprList [assoc id: mtExprList] . 
+
+  op _*_ : Expr Expr -> Expr [prec 18 gather (e E)] . ---- just syntax, no comm 
+  op _/_ : Expr Expr -> Expr [prec 18 gather (e E)] . ---- just syntax, no comm 
+  op _+_ : Expr Expr -> Expr [prec 20 gather (e E)] . ---- just syntax, no comm 
+  op _-_ : Expr Expr -> Expr [prec 20 gather (e E)] . 
+  op -_ : Expr -> Expr . 
+  ops _==_ _<=_ _>=_ _>_ _<_ : Expr Expr -> Expr [prec 37] . 
+  op default : TypeName -> Expr .
+  op _as_ : Expr TypeName -> Expr .
+endm 
+
+mod INT-EXPRESSION is 
+  pr EXPRESSION .
+
+  var  IV : IntVarId . 
+  var  MS : MemoryStack . 
+  vars I I' : Int . 
+  vars IE IE' : IntExpr .
+  vars N S : Nat .
+  vars NS NS1 NS2 : Set{UniversalType} .
+
+---- FOR STATISTICAL MODEL CHECKING
+  ---- random(S) gives the S-th random number following a uniform distribution in the range [0,1)
+  ---- rnd(N, S) generates the S-th random number in the range [0, N) 
+  op rnd : Nat Nat -> Int .
+  eq rnd(N, S) 
+    = trunc(rat((rat2float(random(S) rem 100000) /F 100000.0) *F rat2float(N))) .
+
+---- FOR SEARCH AND MODEL CHECKING
+----  ---- rnd(S) gives a random number in the range [0, N)
+----  op rnd2 : Nat -> [Nat] .
+----  op rnd3 : Nat Set{UniversalType} -> [Nat] .
+----  op rnd4 : Set{UniversalType} -> [Nat] .
+----  eq rnd2(N) = rnd3(N, empty) .
+----  eq rnd3(s N, NS) = rnd3(N, (NS # N)) .
+----  eq rnd3(0, NS) = rnd4(NS) .
+----  rl [rnd] : rnd4((N # NS)) => N .
+--------  eq rnd2(0) = 0 .
+--------  rl rnd2(s N) => N .
+--------  rl rnd2(s N) => rnd2(N) .
+
+  sort IntExpr .
+  subsorts Int IntVarId < IntExpr < Expr .
+
+----  op _*_ : IntExpr IntExpr -> IntExpr [prec 18 gather (e E)] .  ---- TODO: no comm 
+----  op _+_ : IntExpr IntExpr -> IntExpr [prec 20 gather (e E)] .  ---- TODO: no comm 
+----  op _-_ : IntExpr IntExpr -> IntExpr [prec 20 gather (e E)] . 
+----  op _+_ : Expr Expr -> Expr [assoc comm prec 20 gather (e E)] . 
+  op choose : Expr -> Expr .
+  op choose : IntExpr -> IntExpr .
+endm
+
+mod FLOAT-EXPRESSION is 
+  pr EXPRESSION .
+
+  sort FloatExpr .
+  subsorts Float FloatVarId < FloatExpr < Expr .
+
+----  op _*_ : FloatExpr FloatExpr -> FloatExpr [prec 18 gather (e E)] .  ---- TODO: no comm 
+----  op _+_ : FloatExpr FloatExpr -> FloatExpr [prec 20 gather (e E)] .  ---- TODO: no comm 
+----  op _-_ : FloatExpr FloatExpr -> FloatExpr [prec 20 gather (e E)] . 
+endm
+
+mod STRING-EXPRESSION is
+  pr STRING .
+  pr EXPRESSION .
+  pr INT-EXPRESSION .
+  pr CONVERSION .
+
+  sort StringExpr .
+  subsort String StringVarId < StringExpr < Expr .
+
+  op format : ExprList -> StringExpr .
+
+  vars Str1 Str2 Str3 : String .
+  var  Pos : Nat .
+
+  ---- replace(Str1, Str2, Str3) replaces the first occurrence of Str2 en Str2 with Str3.
+  op replace : String String String -> String .
+  ceq replace(Str1, Str2, Str3) 
+    = (substr(Str1, 0, Pos) ++ Str3) ++ substr(Str1, Pos +N length(Str2), length(Str1)) 
+    if Pos := find(Str1, Str2, 0) .
+endm
+
+mod BOOL-EXPRESSION is 
+  pr INT-EXPRESSION .
+
+  sort BoolExpr .
+  subsorts Bool BoolVarId < BoolExpr < Expr .
+  ----ops _<=_ _>=_ _>_ _<_ : IntExpr IntExpr -> BoolExpr [ditto] . 
+  ops _<=_ _>=_ _>_ _<_ : Expr Expr -> BoolExpr [ditto] . 
+  op $ : -> BoolExpr .
+  op !_ : BoolExpr -> BoolExpr [prec 53] .
+  op !_ : Expr -> Expr [prec 53] .
+  op _&&_ : BoolExpr BoolExpr -> BoolExpr [prec 55 gather(e E)] .
+  op _&&_ : Expr Expr -> Expr [prec 55 gather(e E)] .
+  op _||_ : Expr Expr -> Expr [prec 59 gather (e E)] .
+  op _||_ : BoolExpr BoolExpr -> BoolExpr [prec 59 gather (e E)] .
+endm
+
+mod COLLECTION is 
+  pr FLOAT-EXPRESSION .
+  pr INT-EXPRESSION .
+  pr BOOL-EXPRESSION .
+
+  sorts MapExpr SeqExpr SetExpr .
+  subsorts MapExpr SeqExpr SetExpr < Expr .
+  subsort MapType MapVarId < MapExpr .
+  subsort SeqType SeqVarId < SeqExpr .
+  subsort SetType SetVarId < SetExpr .
+
+  op _[_] : Expr Expr -> Expr [prec 14] . ---- TODO: MapExpr Expr
+  op keys : Expr -> SeqExpr .
+  op sizeof : SeqExpr -> IntExpr .
+  op sizeof : SetExpr -> IntExpr .
+  op _in_ : Expr MapExpr -> BoolExpr . ---- in the key map
+  op _in_ : Expr SetExpr -> BoolExpr .
+  op _in_ : Expr SeqExpr -> BoolExpr .
+endm 
+
+fmod EVENT is 
+----  pr MAYBE{EventName} .
+  pr EVENT-NAME .
+  pr MAYBE{UniversalType} .
+  pr EXPR-TYPE .
+  sorts Event .
+  op _{_} : EventName Maybe{UniversalType} -> Event .
+  op halt : -> EventName . ---- https://p-org.github.io/P/manual/expressions/#halt  
+endfm 
+
+view Event from TRIV to EVENT is 
+  sort Elt to Event .
+endv
+
+mod MACH-EXPRESSION is
+  pr COLLECTION .
+  sort MachExpr .
+  subsort MachId MachVarId < MachExpr < Expr . ---- Name MachVarId < MachExpr < Expr
+  op this : -> MachVarId .
+  op _._ : VarId MachVarId -> MachExpr [prec 15] .
+endm
+
+mod PARAMETER is 
+  pr COLLECTION  .
+  pr MACH-EXPRESSION .
+  sorts Assignment Parameter .
+  subsort Assignment < Parameter .
+  op _=_ : VarId Expr -> Assignment [prec 32 gather (e &)] .
+  op _=_ : MachVarId MachExpr -> Assignment [prec 32 gather (e &)] .
+  op _=_ : MachVarId MachId -> Assignment [prec 32 gather (e &)] .
+  op mt : -> Parameter .
+  op _,_ : Parameter Parameter -> Parameter [assoc id: mt prec 33] .
+  op ((_)) : Parameter -> Expr .
+
+  var  VId : VarId .
+  var  MVId : MachVarId .
+  vars Par Par' : Parameter .
+  var  E : Expr .
+  var  ME : MachExpr .
+  var  MId : MachId .
+
+  op getR : UniversalType VarId -> Expr .
+  op getR : UniversalType MachVarId -> MachId .
+  eq getR((Par, VId = E, Par'), VId) = E .
+  eq getR((Par, MVId = MId, Par'), MVId) = MId .
+endm
+
+mod CODE is 
+  pr STRING-EXPRESSION .
+  pr MACH-EXPRESSION .
+  pr COLLECTION .
+  pr P-TYPE .
+  pr PARAMETER .
+  pr DATATYPE .
+  pr EVENT .
+
+----  op _(_,_) ; : Name EventName MachVarId -> Sentence .
+  op _(_,_) : Name EventName Expr -> Expr [gather (E & &) prec 0] .
+  op _(_,_,_) : Name Expr EventName Expr -> Expr [gather (E & & &) prec 0] .
+  op EventName : -> EventName .
+  op _:_ : EventName TypeName -> NamedType [prec 30] . 
+
+  op new_`(`) : Name -> MachExpr .
+  op new_`(_`) : Name ExprList -> MachExpr .
+----  op new_`(`(_`)`) : Name Parameter -> MachExpr .
+----  op new_`(`) ; : Name -> Sentence .
+----  op new_`(_`) ; : Name ExprList -> Sentence .
+----  op new_`(`(_`)`) ; : Name Parameter -> Sentence .
+  op _; : Expr -> Sentence .
+
+  sort Sentence Code VarDecl VarDecl* CodeStack .
+  subsort VarDecl < Sentence VarDecl* < Code < CodeStack .
+  op skip : -> VarDecl* .
+  op __ : VarDecl* VarDecl* -> VarDecl* [assoc id: skip prec 50] .
+  op __ : Code Code -> Code [assoc id: skip prec 50] .
+  op noCode : -> CodeStack .
+  op _<<|_ : CodeStack CodeStack -> CodeStack [assoc right id: noCode prec 53] . 
+  op _=_; : Expr Expr -> Sentence [prec 48 gather (e &)] .
+  op _=_; : MachVarId MachExpr -> Sentence [prec 48 gather (e &)] .
+----  op _[_]=_; : MapVarId Expr Expr -> Sentence [prec 50] .
+  op while `(_`) {_} : BoolExpr Code -> Sentence .
+  op foreach`(_in_`) {_} : VarId Expr Code -> Sentence . 
+  op goto_; : Name -> Sentence .
+  op goto_,_; : Name Expr -> Sentence .
+  op send_,_; : Expr EventName -> Sentence .
+  op send_,_; : Expr VarId -> Sentence .
+  op send_,_,_; : Expr EventName Expr -> Sentence .
+  op send_,_,_; : Expr Expr Expr -> Sentence .
+  op raise_; : EventName -> Sentence .
+  op raise_,_; : EventName Expr -> Sentence .
+  op if (_) {_} : Expr Code -> Sentence .
+  op if (_) {_} else {_} : Expr Code Code -> Sentence .
+  op announce_; : EventName -> Sentence . 
+  op announce_,_; : EventName Expr -> Sentence . 
+----  op assert_; : BoolExpr -> Sentence .
+  op assert_,_; : Expr Expr -> Sentence .
+  op print_; : Expr -> Sentence .
+  op return_; : Expr -> Sentence . 
+  op return ; : -> Sentence . 
+
+  sorts AnonFunction EventNameList .
+  sorts ReceiveCase ReceiveCases .
+  subsort ReceiveCase < ReceiveCases .
+  op mtReceiveCases : -> ReceiveCases .
+  op __ : ReceiveCases ReceiveCases -> ReceiveCases [assoc comm id: mtReceiveCases] .
+  op receive { _ } : ReceiveCases -> Sentence .
+  op case_:_ : EventNameList AnonFunction -> ReceiveCase [prec 10] .
+
+  ---- Variable Decl
+  op var_:_; : VarId TypeName -> VarDecl .
+----  op var_:_; : MachVarId Name -> VarDecl .
+
+----  15_,_; : MachId EventName -> Sentence .
+----  op send_,_,_; : MachId EventName Expr -> Sentence .
+
+  op _+=_; : VarId ExprList -> Sentence [prec 48 gather (e &)] .
+  ---- op _+=_; : VarId Expr -> Sentence [prec 48 gather (e &)] .
+  ---- op _+=`(_,_`) ; : VarId Expr Expr -> Sentence [prec 48] .
+  op _-=_; : VarId Expr -> Sentence [prec 48 gather (e &)] .
+endm
+
+view Code from TRIV to CODE is 
+  sort Elt to Code .
+endv
+
+---(
+  anonFunction : (funParam?) functionBody                         # AnonymousFunDecl
+
+  funDecl : 
+    | fun name (funParamList?) (: returnType)? ;                  # ForeignFunDecl
+    | fun name (funParamList?) (: returnType)? functionBody       # FunDecl
+    ;
+
+  functionBody : { varDecl* statement* }                          # FunctionBody
+
+  varDecl : var iden : type; ;                                    # VariableDecl
+
+  funParamList : funParam (, funParam)* ;                         # FunParameterList
+  funParam : iden : type                                          # FunParameter
+)
+mod FUNCTION is 
+  pr CODE .
+  pr (MAYBE * (op noValue to void)){TypeName} .
+
+  sort FunDecl VoidExpr .
+  subsort VoidExpr < Expr .
+  op fun_(_); : Name NamedTypeSequence -> FunDecl .
+  op fun_(_):_; : Name NamedTypeSequence TypeName -> FunDecl .
+  op fun_(); : Name -> FunDecl .
+  op fun_():_; : Name TypeName -> FunDecl .
+  op fun_(_){_} : Name NamedTypeSequence Code -> FunDecl .
+  op fun_(_):_{_} : Name NamedTypeSequence TypeName Code -> FunDecl .
+  op fun_(){_} : Name Code -> FunDecl .
+  op fun_():_{_} : Name TypeName Code -> FunDecl .
+
+  sort Function .
+  op fun : Name NamedTypeSequence Maybe{TypeName} Code -> Function .
+  op fun : Name NamedTypeSequence Maybe{TypeName} -> Function . ---- external function
+  op fun : FunDecl -> Function .
+
+  eq fun(fun FN(NTS) ;) = fun(FN, NTS, void) .
+  eq fun(fun FN(NTS): Ty ;) = fun(FN, NTS, Ty) .
+  eq fun(fun FN(): Ty ;) = fun(FN, mtNamedTypeSequence, Ty) .
+  eq fun(fun FN() ;) = fun(FN, mtNamedTypeSequence, void) .
+  eq fun(fun FN(NTS) { Code }) = fun(FN, NTS, void, Code) .
+  eq fun(fun FN(NTS): Ty { Code }) = fun(FN, NTS, Ty, Code) .
+  eq fun(fun FN(): Ty { Code }) = fun(FN, mtNamedTypeSequence, Ty, Code) .
+  eq fun(fun FN() { Code }) = fun(FN, mtNamedTypeSequence, void, Code) .
+
+  var FN : Name .
+  var NTS : NamedTypeSequence .
+  var Ty : TypeName .
+  var Code : Code .
+
+  op getName : Function -> Name .
+  eq getName(fun(FN, NTS, Ty, Code)) = FN .
+  
+  op _() : Name -> Expr [gather (E) prec 0] .
+  op _(_) : Name ExprList -> Expr [gather (E &) prec 0] .
+----  op _() ; : Name -> Sentence [gather (E) prec 0] .
+----  op _(_) ; : Name ExprList -> Sentence [gather (E &) prec 0] .
+endm
+
+view Function from TRIV to FUNCTION is 
+  sort Elt to Function .
+endv
+
+view NamedTypeSequence from TRIV to FUNCTION is 
+  sort Elt to NamedTypeSequence .
+endv
+
+view EventNameList from TRIV to CODE is 
+  sort Elt to EventNameList .
+endv
+
+---(
+# State Machine in P
+machineDecl : machine name machineBody
+
+# State Machine Body
+machineBody : LBRACE machineEntry* RBRACE;
+machineEntry 
+  | varDecl
+  | funDecl
+  | stateDecl
+  ;
+
+# Variable Decl
+varDecl : var iden : type; ;                                    
+
+# State Declaration in P
+stateDecl : start? (hot | cold)? state name { stateBodyItem* }
+
+# State Body
+stateBody:
+  | entry anonFunction                # StateEntryFunAnon
+  | entry funName ;                   # StateEntryNamed
+  | exit noParamAnonFunction          # StateExitFunAnon
+  | exit funName;                     # StateExitNamed
+
+  ## Transition or Event Handlers in each state
+  | defer eventList ;                               # StateDeferHandler
+  | ignore eventList ;                              # StateIgnoreHandler
+  | on eventList do funName ;                       # OnEventDoAnonHandler
+  | on eventList do anonFunction                    # OnEventDoNamedHandler
+  | on eventList goto stateName ;                   # OnEventGotoState
+  | on eventList goto stateName with anonFunction   # OnEventGotoStateWithAnonHandler
+  | on eventList goto stateName with funName ;      # OnEventGotoStateWithNamedHandler
+  ;
+)
+mod SYNTAX-MACHINE is
+  pr CODE .
+  pr P-TYPE .
+  pr DATATYPE .
+  pr FUNCTION .
+
+  var ENL : EventNameList .
+
+  ---- State Machine in P
+  sort MachineDecl .
+  op machine_{_} : Name MachineEntry* -> MachineDecl .
+
+  ---- State Machine Body
+  sorts MachineEntry MachineEntry* .
+  subsorts VarDecl FunDecl StateDecl < MachineEntry .
+  subsorts MachineEntry VarDecl* < MachineEntry* .
+  op __ : MachineEntry* MachineEntry* -> MachineEntry* [assoc id: skip prec 32] .
+
+  ---- State Declaration in P
+  sorts StateDecl StateType .
+  ops hot cold : -> StateType .
+  op state_{_} : Name StateBodyItem* -> StateDecl .
+  op _state_{_} : StateType Name StateBodyItem* -> StateDecl .
+  op start state_{_} : Name StateBodyItem* -> StateDecl .
+  op start_state_{_} : StateType Name StateBodyItem* -> StateDecl .
+  
+  ---- State Body
+  ---- TODO: handle other state bodies
+  sorts NoParamAnonFunction StateBodyItem StateBodyItem* . ---- AnonFunction EventNameList Name
+  subsort NoParamAnonFunction < AnonFunction . 
+  subsort StateBodyItem VarDecl* < StateBodyItem* .
+  subsort EventName < EventNameList .
+  op nilEventNameList : -> EventNameList .
+  op _,_ : EventNameList EventNameList -> EventNameList [assoc] .
+  eq nilEventNameList, ENL = ENL .
+  eq ENL, nilEventNameList = ENL .
+----  op _,_ : Event Event -> Event [assoc] . ---- for preregularity
+  op __ : StateBodyItem* StateBodyItem* -> StateBodyItem* [assoc id: skip prec 32] .
+  op entry_ : AnonFunction -> StateBodyItem [prec 30] .
+  op entry_; : Name -> StateBodyItem [prec 30] .
+  op exit_ : NoParamAnonFunction -> StateBodyItem [prec 30] .
+  op exit_; : Name -> StateBodyItem [prec 30] .
+  op defer_; : EventNameList -> StateBodyItem [prec 30] .
+  op ignore_; : EventNameList -> StateBodyItem [prec 30] .
+  op on_do_; : EventNameList Name -> StateBodyItem [prec 30] .
+  op on_do_ : EventNameList AnonFunction -> StateBodyItem [prec 30] .
+  op on_goto_; : EventNameList Name -> StateBodyItem [prec 30] .
+  op on_goto_with_ : EventNameList Name AnonFunction -> StateBodyItem [prec 30] .
+  op on_goto_with_; : EventNameList Name Name -> StateBodyItem [prec 30] .
+
+  op `(_`)`{_`} : NamedTypeSequence Code -> AnonFunction .
+  op `(_`)`{`} : NamedTypeSequence -> AnonFunction .
+  op {_} : Code -> NoParamAnonFunction .
+  op {} : -> NoParamAnonFunction .
+endm
+
+---(
+# Monitor in P
+specMachineDecl : spec iden observes eventsList statemachineBody ;
+---)
+mod SYNTAX-MONITOR is
+  inc SYNTAX-MACHINE .
+
+  ---- Spec Machine in P (Monitor)
+  sort SpecDecl .
+  op spec_observes_{_} : Name EventNameList MachineEntry* -> SpecDecl .
+endm
+
+mod STATE is 
+  inc CODE .
+  sort State .
+endm 
+
+view StateBodyItem* from TRIV to SYNTAX-MACHINE is 
+  sort Elt to StateBodyItem* .
+endv 
+
+mod MACHINE is 
+  pr MAP{Name, Tuple5{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}}} .
+  pr MAYBE{Name} .
+  inc SYNTAX-MACHINE .
+  pr SET{Function} .
+
+  op addFunction : FunDecl Set{Function} -> Set{Function} .
+  ceq addFunction(FD, (Function # Functions)) 
+    = (fun(FD) # Functions) 
+    if getName(fun(FD)) = getName(Function) .
+  eq addFunction(FD, Functions) = fun(FD) # Functions [owise] .
+
+  op add : EventNameList Set{EventName} -> Set{EventName} .
+  eq add(EN, ENS) = (EN # ENS) .
+  eq add((EN, ENL), ENS) = add(ENL, (EN # ENS)) .
+  eq add(nilEventNameList, ENS) = ENS .
+
+  ---- [Id, Id', Map, Memory]
+  ---- Id is the id of the machine
+  ---- Id' is the start state of the machine (noValue until set)
+  ---- Map associates a body item to each state of the machine. Each 
+  ----   state id has a tuple, composed of a start code (noValue until 
+  ----   set), and a map in which each event that can be received has a 
+  ----   code associate
+  ---- Memory is the memory of the machine
+  op [_,_,_,_,_,_,_] : Name [Maybe{Name}] Map{Name, Tuple5{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}}} Set{Function} Set{EventName} Set{EventName} Memory -> Machine .
+  op getName : Machine -> Name .
+  eq getName([Id, Id', States, Functions, DEs, IEs, Memory]) = Id .
+  op getStartStateName : Machine -> Name .
+  eq getStartStateName([Id, Id', States, Functions, DEs, IEs, Memory]) = Id' .
+  op getStates : Machine -> Map{Name, Tuple5{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}}} .
+  eq getStates([Id, Id', States, Functions, DEs, IEs, Memory]) = States .
+
+  op parse : MachineDecl -> Machine .
+  op parse : MachineEntry* Machine -> Machine .
+  op parse : StateBodyItem* -> Tuple{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}} .
+  op parse : StateBodyItem* Tuple{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}} 
+                         -> Tuple{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}} .
+
+  vars Id Id' Id'' : Name .
+  var  FId : Name .
+  var  Id? : Maybe{Name} .
+  var  ME* : MachineEntry* .
+  var  Q : VarId .
+  var  MachQ : MachVarId .
+  var  SetQ : SetVarId .
+  var  SeqQ : SeqVarId .
+  var  MachId : MachId .
+  var  MQ MapQ : MapVarId .  
+  var  States : Map{Name, Tuple5{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}}} .
+  vars Code Code' : Code .
+  var  Code? : Maybe{Code} .
+  var  Function : Function .
+  var  Functions : Set{Function} .
+  var  Memory : Memory .
+  var  Items : StateBodyItem* .
+  var  StateBodyItemMap : Map{EventName, Tuple2{NamedTypeSequence, Code}} .
+  var  EN : EventName .
+  var  Ty : TypeName .
+  vars NTS NTS' : NamedTypeSequence .
+  var  FD : FunDecl .
+  var  StT : StateType .
+  vars ENL ENL' ENL'' : EventNameList .
+  vars ENS DEs IEs : Set{EventName} .
+
+  eq parse(machine Id { ME* }) = parse(ME*, [Id, noValue, empty, empty, empty, empty, mtMemory]) .
+
+  ---- TODO: we could check that Id is a previously defined machine
+  ---- eq parse(var MachQ : Id ; ME*, [Id', Id?, States, Functions, DEs, IEs, Memory]) 
+  ----   = parse(ME*, [Id', Id?, States, Functions, DEs, IEs, Memory [MachQ -> noValue]]) .
+  eq parse(var MapQ : Ty ; ME*, [Id, Id?, States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id, Id?, States, Functions, DEs, IEs, Memory [MapQ -> map{ empty } ]]) .
+  eq parse(var SetQ : Ty ; ME*, [Id, Id?, States, Functions, DEs, IEs, Memory]) 
+  ----  = parse(ME*, [Id, Id?, States, Functions, DEs, IEs, Memory [SetQ -> set{ empty } ]]) .
+    = parse(ME*, [Id, Id?, States, Functions, DEs, IEs, Memory [SetQ -> set{ nil } ]]) .
+  eq parse(var SeqQ : Ty ; ME*, [Id, Id?, States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id, Id?, States, Functions, DEs, IEs, Memory [SeqQ -> seq{ nil } ]]) .
+  eq parse(var Q : Ty ; ME*, [Id, Id?, States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id, Id?, States, Functions, DEs, IEs, Memory [Q -> noValue]]) 
+      [owise] .
+
+  eq parse(StT state Id { Items } ME*, [Id', Id'', States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id', Id'', insert(Id, parse(Items), States), Functions, DEs, IEs, Memory]) .
+  eq parse(state Id { Items } ME*, [Id', Id'', States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id', Id'', insert(Id, parse(Items), States), Functions, DEs, IEs, Memory]) .
+  eq parse(start state Id { Items } ME*, [Id', noValue, States, Functions, DEs, IEs, Memory]) ---- TODO: check
+    = parse(ME*, [Id', Id, insert(Id, parse(Items), States), Functions, DEs, IEs, Memory]) .
+  eq parse(skip, [Id, Id', States, Functions, DEs, IEs, Memory]) = [Id, Id', States, Functions, DEs, IEs, Memory] .
+
+  eq parse(FD ME*, [Id', Id?, States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id', Id?, States, addFunction(FD, Functions), DEs, IEs, Memory]) . 
+----  op fun_(_){_} : Name NamedTypeSequence Code -> FunDecl .
+----  op fun_(_):_{_} : Name NamedTypeSequence Type Code -> FunDecl .receive
+----  op fun_():_{_} : Name Type Code -> FunDecl .
+
+  eq parse(Items) = parse(Items, (mtNamedTypeSequence, skip, empty, empty, empty)) .
+  eq parse(entry { Code } Items, (mtNamedTypeSequence, skip, StateBodyItemMap, DEs, IEs))
+    = parse(Items, (mtNamedTypeSequence, Code, StateBodyItemMap, DEs, IEs)) .
+  eq parse(entry (NTS) { Code } Items, (mtNamedTypeSequence, skip, StateBodyItemMap, DEs, IEs)) 
+    = parse(Items, (NTS, Code, StateBodyItemMap, DEs, IEs)) .
+  eq parse(entry { } Items, (mtNamedTypeSequence, skip, StateBodyItemMap, DEs, IEs)) 
+    = parse(Items, (mtNamedTypeSequence, skip, StateBodyItemMap, DEs, IEs)) .
+  eq parse(on EN do { Code } Items, (NTS, Code?, StateBodyItemMap, DEs, IEs))
+    = parse(Items, (NTS, Code?, insert(EN, (mtNamedTypeSequence, Code), StateBodyItemMap), DEs, IEs)) .
+  eq parse(on EN do { } Items, (NTS, Code?, StateBodyItemMap, DEs, IEs))
+    = parse(Items, (NTS, Code?, insert(EN, (mtNamedTypeSequence, skip), StateBodyItemMap), DEs, IEs)) .
+  eq parse(on EN goto Id ; Items, (NTS, Code?, StateBodyItemMap, DEs, IEs))
+    = parse(Items, (NTS, Code?, insert(EN, (mtNamedTypeSequence, goto Id ;), StateBodyItemMap), DEs, IEs)) .
+  eq parse(on EN goto Id with (NTS) { Code } Items, (NTS', Code?, StateBodyItemMap, DEs, IEs))
+    = parse(Items, (NTS', Code?, insert(EN, (NTS, Code goto Id ;), StateBodyItemMap), DEs, IEs)) .
+  eq parse(on EN goto Id with { Code } Items, (NTS, Code?, StateBodyItemMap, DEs, IEs))
+    = parse(Items, (NTS, Code?, insert(EN, (mtNamedTypeSequence, Code goto Id ;), StateBodyItemMap), DEs, IEs)) .
+  eq parse(on EN do (NTS) { Code } Items, (NTS', Code?, StateBodyItemMap, DEs, IEs)) 
+    = parse(Items, (NTS', Code?, insert(EN, (NTS, Code), StateBodyItemMap), DEs, IEs)) .
+  eq parse(defer ENL ; Items, (NTS, Code?, StateBodyItemMap, DEs, IEs)) 
+    = parse(Items, (NTS, Code?, StateBodyItemMap, add(ENL, DEs), IEs)) .
+  eq parse(ignore ENL ; Items, (NTS, Code?, StateBodyItemMap, DEs, IEs)) 
+    = parse(Items, (NTS, Code?, StateBodyItemMap, DEs, add(ENL, IEs))) .
+  eq parse(skip, (NTS, Code?, StateBodyItemMap, DEs, IEs))
+    = (NTS, Code?, StateBodyItemMap, DEs, IEs) .
+endm
+
+mod MONITOR is 
+  inc MACHINE .
+  inc SYNTAX-MONITOR .
+  sort Monitor . ---- SpecMachine
+endm
+
+view Machine from TRIV to MACHINE is
+  sort Elt to Machine .
+endv
+
+view Monitor from TRIV to MONITOR is
+  sort Elt to Monitor .
+endv
+
+---(
+modExpr :
+| ( modExpr )                               # AnnonymousModuleExpr
+| { bindExpr (, bindExpr)* }                # PrimitiveModuleExpr
+| union modExpr (, modExpr)+                # UnionModuleExpr
+| assert idenList in modExpr                # AssertModuleExpr
+| iden                                      # NamedModule
+;
+
+# Bind a machine to an interface
+
+bindExpr : (iden | iden -> iden) ;          # MachineBindExpr
+
+# Create a named module i.e., assign a name to a module
+
+namedModuleDecl : module iden = modExpr ;   # Named module declaration
+)
+mod MODULE is 
+  pr ID .
+  sort Name+ ModExpr ModExpr+ BindExpr BindExpr+ .
+  subsort Name < Name+ < ModExpr .
+  subsort Name < BindExpr Name+ < BindExpr+ .
+  op _,_ : Name+ Name+ -> Name+ [assoc] .
+  op _,_ : ModExpr ModExpr -> ModExpr [assoc] .
+  op _,_ : BindExpr+ BindExpr+ -> BindExpr+ [assoc] .
+  ---- op ((_)) : ModExpr -> ModExpr .
+  op {_} : BindExpr+ -> ModExpr .
+  op union_ : ModExpr -> ModExpr .
+  op assert_in_ : Name+ ModExpr -> ModExpr .
+endm 
+
+---(
+testcase
+| test iden [main=iden] : modExpr ;                  # TestDecl
+;
+)
+mod TEST is 
+  pr MODULE .
+  sort TestDecl .
+  op test_[main =_]:_; : Name Name ModExpr -> TestDecl .
+  vars Id Id' : Name .
+  var  ModExp : ModExpr .
+  op getName : TestDecl -> Name .
+  eq getName(test Id [main = Id'] : ModExp ;) = Id .
+endm
+
+view TestDecl from TRIV to TEST is
+  sort Elt to TestDecl .
+endv
+
+---(
+topDecl:                # Top-level P Program Declarations
+| typeDecl              # UserDefinedTypeDeclaration
+| enumTypeDecl          # EnumTypeDeclaration
+| eventDecl             # EventDeclaration
+| machineDecl           # MachineDeclaration
+| specDecl              # SpecDeclaration
+| funDecl               # GlobalFunctionDeclaration
+| moduleDecl            # ModuleDeclaration
+| testDecl              # TestCaseDeclaration
+;
+)
+mod SYSTEM is
+  pr TEST .
+  pr SET{Machine} .
+  pr SET{Monitor} .
+  pr SET{TestDecl} .
+  pr SET{Function} .
+
+  op get : Set{Machine} Name -> Machine .
+  op get : Set{Function} Name -> Function .
+  op get : Set{TestDecl} Name -> TestDecl .
+  ceq get((Function # Functions), Id) = Function if getName(Function) = Id .
+  ceq get((Machine # Machines), Id) = Machine if getName(Machine) = Id .
+  ceq get((Test # Tests), Id) = Test if getName(Test) = Id .
+
+  sort System .
+  op ((_,_,_)) : Set{Machine} Set{Function} Set{TestDecl} -> System .
+
+  sorts Queue{Event} NeQueue{Event} .
+  subsort Event < NeQueue{Event} < Queue{Event} .
+  op mtq : -> Queue{Event} .
+  op _<<_ : Queue{Event} Queue{Event} -> Queue{Event} [assoc id: mtq prec 54 gather (e E)] .
+
+  op main : -> Name .
+  op newSystem : -> System .
+  eq newSystem = (empty,empty,empty) .
+
+  sorts MachExecState ExecState SystemExecState .
+  subsort MachExecState < ExecState .
+  op [_,_,_,_,_,_,_,_,_,_] : MachId Name Maybe{Name} Queue{Event} Queue{Event} [Maybe{Code}] Set{Function} Set{EventName} Set{EventName} MemoryStack 
+       -> MachExecState 
+    [format (d s++ d ni d ni d ni d ni d ni d ni d ni d ni d ni s --)] .
+    
+  op none : -> ExecState .
+  op __ : ExecState ExecState -> ExecState [assoc comm id: none format (d ni d)] .
+  op [_,_,_,_] : ExecState Nat System String -> SystemExecState [format (n s++ d ni d ni d ni s --)] .
+  
+  vars Id Id' Id'' Id3 Name Init St : Name .
+  var  M : MachVarId .
+  vars States States' : Map{Name, Tuple5{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}}} .
+  vars Mem Mem' MM MM' : Memory .
+  vars Machine Machine' : Machine .
+  var  MachineDecl : MachineDecl .
+  var  SpecDecl : SpecDecl .
+  vars Machines : Set{Machine} .
+  vars Function Function' : Function .
+  var  FD : FunDecl .
+  vars Functions Functions' Functions'' : Set{Function} .
+  var  Tests : Set{TestDecl} .
+  vars Test Test' : TestDecl .
+  vars ModExp ModExp' : ModExpr .
+  vars Events Events' : Queue{Event} .
+  var  Code : Code .
+  vars ME ME' ME'' : MachExpr .
+  var  MES : MachExecState .
+  var  MS : MemoryStack .
+  var  CS : CodeStack .
+  var  N : Nat .
+  var  MId : MachId .
+  var  Decls : DeclList .
+  vars DEs IEs : Set{EventName} .
+
+  op addMachine : MachineDecl System -> System .
+  op addMachine : Machine System -> System .
+  eq addMachine(MachineDecl, (Machines, Functions, Tests)) 
+    = addMachine(parse(MachineDecl), (Machines, Functions, Tests)) .
+  ceq addMachine(Machine, ((Machine' # Machines), Functions, Tests)) 
+    = ((Machine # Machines), Functions, Tests) 
+    if getName(Machine) = getName(Machine') .
+  eq addMachine(Machine, (Machines, Functions, Tests)) = ((Machine # Machines), Functions, Tests) [owise] .
+
+  op addTest : TestDecl System -> System .
+  ceq addTest(Test, (Machines, Functions, (Test' # Tests))) 
+    = (Machines, Functions, (Test # Tests)) 
+    if getName(Test) = getName(Test') .
+  eq addTest(Test, (Machines, Functions, Tests)) = (Machines, Functions, (Test # Tests)) [owise] .
+
+  op addFunction : FunDecl System -> System .
+  eq addFunction(FD, (Machines, Functions, Tests)) = (Machines, addFunction(FD, Functions), Tests) .
+
+  op getName : MachExecState -> MachId .
+  eq getName([MId, Id, St, Events, Events', CS, Functions, DEs, IEs, MS]) = MId .
+
+  sorts Decl DeclList .
+  subsorts Decl < DeclList .
+  op nil : -> DeclList .
+  op __ : DeclList DeclList -> DeclList [assoc id: nil] .
+  op [_] : MachineDecl -> Decl .
+  op [_] : SpecDecl -> Decl .
+  op [_] : TestDecl -> Decl .
+  op [_] : FunDecl -> Decl .
+  op init : DeclList -> System .
+  eq init([MachineDecl] Decls) = addMachine(MachineDecl, init(Decls)) .
+  eq init([SpecDecl] Decls) = init(Decls) . ---- TODO: spec machines are ignored
+  eq init([Test] Decls) = addTest(Test, init(Decls)) .
+  eq init([FD] Decls) = addFunction(FD, init(Decls)) .
+  eq init(nil) = newSystem .
+
+  ---- execute initiates the execution of a test in the system. 
+  ---- It first retrieves the test declaration from the system's database and the its main 
+  ---- machine. It returns a MachExecState (a running machine) that will be rewritten 
+  ---- using the rules in the SYSTEM-EXEC module below. 
+  op execute : Name System -> SystemExecState .
+  op executeAux : TestDecl System -> MachExecState .
+  op createMachine : MachId Machine -> MachExecState .
+  ceq execute(Id, (Machines, Functions, (Test # Tests)))
+    = [executeAux(Test, (Machines, Functions, (Test # Tests))), 
+       1, 
+       (Machines, Functions, (Test # Tests)), 
+       ""] 
+    if getName(Test) = Id .
+  ceq executeAux(test Id [main = Id'] : ModExp ;, ((Machine # Machines), Functions, Tests))
+    = createMachine(id(0), Machine) 
+    if Id' = getName(Machine) .
+  eq createMachine(MId, [Id, Id', States, Functions, DEs, IEs, MM])
+    = [MId, Id, Id', mtq, mtq, p2 States[Id'], empty, DEs, IEs, mtMemory <m| [this -> MId] MM] .
+endm
+
+view MachExecState from TRIV to SYSTEM is
+  sort Elt to MachExecState .
+endv 
+
+mod SYSTEM-EXEC is
+  inc SYSTEM .
+  pr TUPLE3{MachExecState, Nat, MemoryStack} .
+  pr (MAYBE * (op noValue to noFunction)){Function} .
+
+  sort Eval .
+  subsort Eval < Code .
+----  op _<|_ : Eval Code -> Code [prec 51 gather (e E) right id: skip] .
+  op _<|_ : Code Code -> Code [prec 52 gather (e E) assoc right id: skip] .
+  op eval : Expr -> Eval .
+  op eval : MachExpr -> Eval .
+  op evalEN : Expr -> Eval .
+  op result : [Expr] -> Eval .
+  op result : [EventName] -> Eval .
+----  op result : MachExpr -> Eval .
+  op invocation : ExprList NamedTypeSequence Code Memory -> Eval .
+  ---- _(_,_)
+  op invocation : EventName Expr NamedTypeSequence Code Memory -> Eval .
+  op new : Name Name ExprList NamedTypeSequence Code Set{Function} Set{EventName} Set{EventName} Memory -> Eval .
+  op @ : -> Expr .
+  op Map@ : -> MapExpr .
+  op Set@ : -> SetExpr .
+  op Seq@ : -> SeqExpr .
+  op Mach@ : -> MachExpr .
+  op @{_} : Expr -> BoolExpr .
+----  op @ ; : -> Sentence .
+  op void : -> Expr .
+
+  vars M MId MId' : MachId .
+  vars Id Id' Id'' Id3 Name Init St St' F : Name .
+  vars Id? Id?' : Maybe{Name} .
+  vars MVId MVId' : MachVarId .
+  vars VId VId' : VarId .
+  var  MV MapV : MapVarId .
+  var  SetV : SetVarId .
+  var  SeqV : SeqVarId .
+  vars States : Map{Name, Tuple5{NamedTypeSequence, Maybe{Code}, Map{EventName, Tuple2{NamedTypeSequence, Code}}, Set{EventName}, Set{EventName}}} .
+  vars Mem Mem' MM MM' : Memory .
+  vars MS MS' MS'' : MemoryStack .
+  var  Machine : Machine .
+  vars Machines Machines' : Set{Machine} .
+  vars Functions Functions' FS FS' : Set{Function} .
+  var  Tests : Set{TestDecl} .
+  var  Test : TestDecl .
+  var  ModExp : ModExpr .
+  vars Events Events' Events'' Events''' : Queue{Event} .
+  vars Code Code' Code'' : Code .
+  vars ME ME' ME'' : MachExpr .
+  vars E E' E'' Expr Expr' : Expr .
+  var  SeqExpr : SeqExpr .
+  var  SetExpr : SetExpr .
+  var  MapExpr : MapExpr .
+  var  MES : MachExecState .
+  var  ES : ExecState .
+  vars N N' S S' : Nat .
+  vars CS CS' : CodeStack .
+  vars BE BE' : BoolExpr .
+  vars EN VEN : EventName .
+  var  UV : UniversalType .
+  vars Ty Ty' : TypeName .
+  var  UDTyV : UserDefinedType .
+  var  UDTy : UserDefinedTypeName .
+  var  MTy : Maybe{TypeName} .
+  vars Exprs EL : ExprList .
+  var  NTS : NamedTypeSequence .
+  vars I I' : Int .
+  vars B B' : Bool .
+  vars Par Par' : Parameter .
+  var  Sys : System .
+  vars Str Str' Log : String .
+  var  StrE : StringExpr .
+  vars R R' : Float .
+  var  RCs : ReceiveCases .
+  var  SeqE : List{UniversalType} .
+----  var  SetE : Set{UniversalType} .
+  var  SetE : List{UniversalType} .
+  var  MapE : Map{UniversalType, UniversalType} .
+  vars DEs DEs' IEs IEs' : Set{EventName} .
+
+  ---- toStr
+  op toStr : Expr -> String .
+  eq toStr(I) = rat2string(I, 10) .
+  ---- eq toStr(R) = 
+
+  eq [eval-casting] :
+     [[MId, Id, St, Events, Events', eval(E as Ty) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(E) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- toStr
+  ceq [eval-toStr] :
+     [[MId, Id, St, Events, Events', eval(toStr(E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(toStr(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   if not (E :: PrimitiveType) .
+  eq [eval-toStr] :
+     [[MId, Id, St, Events, Events', result(E) <| eval(toStr(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(toStr(E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- literal
+  eq [eval-literal-bool] :
+     [[MId, Id, St, Events, Events', eval(B) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(B) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-literal-int] :
+     [[MId, Id, St, Events, Events', eval(I) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(I) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-literal-real] :
+     [[MId, Id, St, Events, Events', eval(R) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(R) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-literal-string] :
+     [[MId, Id, St, Events, Events', eval(Str) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(Str) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-literal-user-defined-type] :
+     [[MId, Id, St, Events, Events', eval(UDTyV) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(UDTyV) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-seq] :
+     [[MId, Id, St, Events, Events', eval(seq{SeqE}) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(seq{SeqE}) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-map] :
+     [[MId, Id, St, Events, Events', eval(map{MapE}) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(map{MapE}) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- variable
+  eq [eval-variable] : 
+     [[MId, Id, St, Events, Events', eval(VId) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getV(VId, MS)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-variable] : 
+     [[MId, Id, St, Events, Events', eval(MVId) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getMach(MVId, MS)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-variable] : 
+     [[MId, Id, St, Events, Events', evalEN(VId) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getEN(VId, MS)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- default map
+  eq [eval-variable] : 
+     [[MId, Id, St, Events, Events', eval(default(map[Ty, Ty'])) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(map{empty}) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+   ---- map of maps access _[_]
+  eq [eval-map] : 
+     [[MId, Id, St, Events, Events', eval(E[E']) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@[E']) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] [owise] .
+  eq [eval-map] : 
+     [[MId, Id, St, Events, Events', result(E) <| eval(@[E']) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E[E'])  <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log].
+
+   ---- map access _[_]
+  eq [eval-map] : 
+     [[MId, Id, St, Events, Events', eval(map{MapE}[E]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(map{MapE}[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-map] : 
+     [[MId, Id, St, Events, Events', result(E) <| eval(map{MapE}[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(MapE[E]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log].
+
+  eq [eval-map] : 
+     [[MId, Id, St, Events, Events', eval(MapV[E]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(MapV[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-map] : 
+     [[MId, Id, St, Events, Events', result(E) <| eval(MapV[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getMap(MapV, E, MS)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log].
+
+  ---- seq access _[_]
+  eq [eval-seq] : 
+     [[MId, Id, St, Events, Events', eval(SeqV[E]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(SeqV[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-seq] : 
+     [[MId, Id, St, Events, Events', result(I) <| eval(SeqV[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getSeq(SeqV, I, MS)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log].
+
+  ---- set access _[_]
+  eq [eval-set] : 
+     [[MId, Id, St, Events, Events', eval(SetV[E]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(SetV[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-set] : 
+     [[MId, Id, St, Events, Events', result(I) <| eval(SetV[@]) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getSet(SetV, I, MS)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log].
+
+  ---- parameter 
+  eq [eval-variable] : 
+     [[MId, Id, St, Events, Events', eval((VId = E, Par)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval((VId = @, Par)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+     . ---- initial eval, since there is no @ in any of the assignments
+  eq [eval-variable] : 
+     [[MId, Id, St, Events, Events', eval((MVId = ME, Par)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(ME) <| eval((MVId = Mach@, Par)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+     . ---- initial eval, since there is no @ in any of the assignments
+  eq [[MId, Id, St, Events, Events', result(E) <| eval((Par, VId = @, VId' = E', Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval((Par, VId = E, VId' = @, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(E) <| eval((Par, VId = @, MVId = ME, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(ME) <| eval((Par, VId = E, MVId = Mach@, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(MId') <| eval((Par, MVId = Mach@, MVId' = ME, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(ME) <| eval((Par, MVId = MId', MVId' = Mach@, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(MId') <| eval((Par, MVId = Mach@, VId = E, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval((Par, MVId = MId', VId = @, Par')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(E) <| eval((Par, VId = @)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result((Par, VId = E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(MId') <| eval((Par, MVId = Mach@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result((Par, MVId = MId')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [[MId, Id, St, Events, Events', eval(VId . VId') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getR(getV(VId, MS), VId')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', eval(VId . MVId) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(getR(getV(VId, MS), MVId)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _&&_
+  eq [[MId, Id, St, Events, Events', eval(E && E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ && E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(B) <| eval(@ && E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(B && @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(B) <| eval(B' && @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(B' and B) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _||_
+  eq [[MId, Id, St, Events, Events', eval(E || E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ || E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(B) <| eval(@ || E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(B || @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(B) <| eval(B' || @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(B' or B) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _<=_
+  eq [[MId, Id, St, Events, Events', eval(E <= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ <= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ <= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I <= @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(@ <= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(R <= @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I') <| eval(I <= @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_<=N_(I, I')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(R') <| eval(R <= @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_<=F_(R, R')) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _>=_
+  eq [[MId, Id, St, Events, Events', eval(E >= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ >= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ >= E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I >= @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' >= @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_>=N_(I', I)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _>_
+  eq [[MId, Id, St, Events, Events', eval(E > E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ > E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ > E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I > @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' > @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_>N_(I', I)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _<_
+  eq [[MId, Id, St, Events, Events', eval(E < E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ < E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(E) <| eval(@ < E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(E < @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(E) <| eval(E' < @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_<N_(E', E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _==_
+  eq [[MId, Id, St, Events, Events', eval(E == E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ == E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(E) <| eval(@ == E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(E == @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(E) <| eval(E' == @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_.==._(E', E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _+_
+  eq [[MId, Id, St, Events, Events', eval(E + E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ + E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ + E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I + @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' + @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(I' .+. I) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(@ + E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(R + @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(R' + @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(R' +F R) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- -_
+  eq [[MId, Id, St, Events, Events', eval(- E) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(- @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(- @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(-I_(I)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _-_
+  eq [[MId, Id, St, Events, Events', eval(E - E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ - E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ - E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I - @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' - @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_.-._(I', I)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(@ - E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(R - @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(R' - @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(_-F_(R', R)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _*_
+  eq [[MId, Id, St, Events, Events', eval(E * E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ * E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ * E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I * @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' * @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(I' .*. I) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(@ * E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(R * @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(R' * @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(R' *F R) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _/_
+  eq [[MId, Id, St, Events, Events', eval(E / E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ / E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ / E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I / @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' / @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(I' quo I) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(@ / E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(R / @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(R) <| eval(R' / @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(R' /F R) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- !_
+  eq [eval-!] :
+     [[MId, Id, St, Events, Events', eval(!(E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(!(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-!] :
+     [[MId, Id, St, Events, Events', result(true) <| eval(!(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+  ---- pseudo-random number
+  ---- = [[MId, Id, St, Events, Events', result(not E) <| Code <<| CS, FS, DEs, IEs, MS] ES, s S, Sys, Log] .
+  ---- the engine decides
+    = [[MId, Id, St, Events, Events', result(false) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-!] :
+     [[MId, Id, St, Events, Events', result(false) <| eval(!(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', result(true) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- _&&_
+  eq [[MId, Id, St, Events, Events', eval(E && E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ && E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(@ && E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(I && @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [[MId, Id, St, Events, Events', result(I) <| eval(I' && @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(I' and I) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- choose
+  eq [eval-choose] :
+     [[MId, Id, St, Events, Events', eval(choose(E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(choose(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-choose] :
+     [[MId, Id, St, Events, Events', result(E) <| eval(choose(@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+  ---- pseudo-random number
+   = [[MId, Id, St, Events, Events', result(rnd(E, S)) <| Code <<| CS, FS, DEs, IEs, MS] ES, s S, Sys, Log] .
+  ---- the engine decides
+  ---- = [[MId, Id, St, Events, Events', result(rnd2(E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- $
+  eq [eval-$] :
+     [[MId, Id, St, Events, Events', eval($) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+  ---- pseudo-random number
+   = [[MId, Id, St, Events, Events', result(rnd(2, S) .==. 0) <| Code <<| CS, FS, DEs, IEs, MS] ES, s S, Sys, Log] .
+  ---- pseudo-random number
+  ---- = [[MId, Id, St, Events, Events', result(rnd2(2) .==. 0) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- map keys
+  eq [eval-keys] :
+     [[MId, Id, St, Events, Events', eval(keys(E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(keys(Map@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-keys] :
+     [[MId, Id, St, Events, Events', result(E) <| eval(keys(Map@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(seq{getKeySeq(E)}) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- map _in_
+  eq [eval-in] :
+     [[MId, Id, St, Events, Events', eval(E in E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(@ in E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-in] :
+     [[MId, Id, St, Events, Events', result(E) <| eval(@ in E') <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E') <| eval(E in @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-in] :
+     [[MId, Id, St, Events, Events', result(MapExpr) <| eval(E' in @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(E' .in. getKeySet(MapExpr)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-in] :
+     [[MId, Id, St, Events, Events', result(set{SetE}) <| eval(E' in @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(occursL(E', SetE)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-in] :
+     [[MId, Id, St, Events, Events', result(seq{SetE}) <| eval(E' in @) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(occursL(E', SetE)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- seq sizeof
+  eq [eval-sizeof] :
+     [[MId, Id, St, Events, Events', eval(sizeof(SeqExpr)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(SeqExpr) <| eval(sizeof(Seq@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-keys] :
+     [[MId, Id, St, Events, Events', result(seq{SeqE}) <| eval(sizeof(Seq@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(sizeL(SeqE)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- set sizeof
+  eq [eval-sizeof] :
+     [[MId, Id, St, Events, Events', eval(sizeof(SetExpr)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(SetExpr) <| eval(sizeof(Set@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-keys] :
+     [[MId, Id, St, Events, Events', result(set{SetE}) <| eval(sizeof(Set@)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+  ---- = [[MId, Id, St, Events, Events', result(| SetE |) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+   = [[MId, Id, St, Events, Events', result(sizeL(SetE)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- format
+  op formatAux : ExprList Nat -> StringExpr .
+  eq [eval-format] :
+     [[MId, Id, St, Events, Events', eval(format((E, EL))) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| eval(format((@, EL))) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-format] :
+     [[MId, Id, St, Events, Events', result(Str) <| eval(format((@))) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(Str) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-format] :
+     [[MId, Id, St, Events, Events', result(Str) <| eval(format((@, E, EL))) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(toStr(E)) <| eval(formatAux((Str, @, EL), 0)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-format] :
+     [[MId, Id, St, Events, Events', result(Str) <| eval(formatAux((Str', @, E, EL), N)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(toStr(E)) <| eval(formatAux((replace(Str', ("{" ++ rat2string(N, 10)) ++ "}", Str), @, EL), s N)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [eval-format] :
+     [[MId, Id, St, Events, Events', result(Str) <| eval(formatAux((Str', @), N)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(replace(Str', ("{" ++ rat2string(N, 10)) ++ "}", Str)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ---- eval machine expression
+  eq [new-sentence] : 
+     [[MId, Id, St, Events, Events', new Id'(Exprs) ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(new Id'(Exprs)) <| Mach@ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [new-sentence] : 
+     [[MId, Id, St, Events, Events', new Id'() ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(new Id'(mtExprList)) <| Mach@ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [new-sentence] : 
+     [[MId, Id, St, Events, Events', result(M) <| Mach@ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ceq [eval-new] : 
+     [[MId, Id, St, Events, Events', eval(new Id'(Exprs)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events, Events', new(Id', Id'', Exprs, p1 States[Id''], p2 States[Id''], Functions', DEs', IEs', MM) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] 
+     if [Id', Id'', States, Functions', DEs', IEs', MM] # Machines' := Machines .
+  ceq [eval-new] : 
+     [[MId, Id, St, Events, Events', eval(new Id'()) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events, Events', new(Id', Id'', mtExprList, p1 States[Id''], p2 States[Id''], Functions', DEs', IEs', MM) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] 
+     if [Id', Id'', States, Functions', DEs', IEs', MM] # Machines' := Machines .
+
+  eq [new] : 
+     [[MId, Id, St, Events, Events', new(Id', Id'', (Expr, Exprs), (VId : Ty, NTS), Code, Functions', DEs', IEs', Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(Expr) <| new(Id', Id'', (Expr, Exprs), (VId : Ty, NTS), Code, Functions', DEs', IEs', Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [new] : 
+     [[MId, Id, St, Events, Events', result(E) <| new(Id', Id'', (Expr, Exprs), (VId : Ty, NTS), Code, Functions', DEs', IEs', Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', new(Id', Id'', Exprs, NTS, Code, Functions', DEs', IEs', Mem [VId -> E]) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [new] : 
+     [[MId, Id, St, Events, Events', new(Id', Id'', mtExprList, mtNamedTypeSequence, Code, Functions', DEs', IEs', Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(id(S)) <| Code' <<| CS, FS, DEs, IEs, MS]
+      [id(S), Id', Id'', mtq, mtq, Code, Functions', DEs', IEs', mtMemory <m| [this -> id(S)] Mem] 
+      ES, s S, Sys, Log] .
+
+  ---- These rules specify how to run the code in the machines in the execution state (ExecState).
+  ---- An execution state is a triplet [running-machines, seed, (Machines, Tests)] where 
+  ----  - running-machines are the machines under execution [...]...[...] 
+  ----  - seed is the seed for the evaluation of random expressions
+  ----  - (Machines, Tests) is the collection of machines and tests loaded in the system
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var MapV : Ty ; Code <<| CS, FS, DEs, IEs, MM <m| MS]
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [MapV -> map{empty}] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var SeqV : Ty ; Code <<| CS, FS, DEs, IEs, MM <m| MS]
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [SeqV -> seq{nil}] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var SetV : Ty ; Code <<| CS, FS, DEs, IEs, MM <m| MS]
+  ---- = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [SetV -> set{empty}] MM <m| MS] .
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [SetV -> set{nil}] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var VId : int ; Code <<| CS, FS, DEs, IEs, MM <m| MS] 
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [VId -> 0] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var VId : float ; Code <<| CS, FS, DEs, IEs, MM <m| MS] 
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [VId -> 0.0] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var VId : string ; Code <<| CS, FS, DEs, IEs, MM <m| MS] 
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [VId -> ""] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var VId : bool ; Code <<| CS, FS, DEs, IEs, MM <m| MS] 
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [VId -> false] MM <m| MS] .
+  eq [local-var-declaration] :
+     [MId, Id, St, Events, Events', var VId : UDTy ; Code <<| CS, FS, DEs, IEs, MM <m| MS] 
+   = [MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, [VId -> noValue] MM <m| MS] .
+   
+  ---- =
+  eq [assignment] : 
+     [[MId, Id, St, Events, Events', VId = E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| VId = @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+     .
+  eq [assignment] :
+     [[MId, Id, St, Events, Events', result(E) <| VId = @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, setV(VId, E, MS)] ES, S, Sys, Log] 
+     .
+---(
+  eq [mach-assignment] : 
+     [[MId, Id, St, Events, Events', MVId = ME ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(ME) <| MVId = Mach@ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [mach-assignment] :
+     [[MId, Id, St, Events, Events', result(MId') <| MVId = Mach@ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, setMach(MVId, MId', MS)] ES, S, Sys, Log] .
+)
+
+  ---- _+=_
+  eq [+assignment] : 
+     [[MId, Id, St, Events, Events', VId += E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| VId += @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [+assignment] :
+     [[MId, Id, St, Events, Events', result(E) <| VId += @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, insertS(VId, E, MS)] ES, S, Sys, Log] .
+
+  ---- _+=(_,_)
+  eq [+assignment] : 
+     [[MId, Id, St, Events, Events', VId += (E, E') ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] ---- _+=`(_`,_`);(VId, E, E')
+   = [[MId, Id, St, Events, Events', eval(E) <| VId += (@, E') ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] . ---- _+=`(_`,_`);(VId, @, E')
+  eq [+assignment] :
+     [[MId, Id, St, Events, Events', result(E) <| VId += (@, E') ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] ---- _+=`(_`,_`);(VId, @, E')
+   = [[MId, Id, St, Events, Events', eval(E') <| VId += (E, @) ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] . ---- _+=`(_`,_`);(VId, E, @)
+  eq [+assignment] :
+     [[MId, Id, St, Events, Events', result(E) <| VId += (E', @) ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] ---- _+=`(_`,_`);(VId, E', @)
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, insert(VId, E', E, MS)] ES, S, Sys, Log] .
+
+  ---- _[_]=_
+  eq [map-assignment] : 
+      [[MId, Id, St, Events, Events', MV[E] = E' ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', eval(E) <| MV[@] = E' ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [map-assignment] : 
+      [[MId, Id, St, Events, Events', result(E) <| MV[@] = E' ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', eval(E') <| MV[E] = @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [map-assignment] : 
+      [[MId, Id, St, Events, Events', result(E') <| MV[E] = @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, setMap(MV, E, E', MS)] ES, S, Sys, Log] .
+
+  eq [while] :
+     [[MId, Id, St, Events, Events', while (BE) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(BE) <| while (@{BE}) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [while] :
+     [[MId, Id, St, Events, Events', result(BE) <| while (@{BE'}) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', if BE then Code while (BE') { Code } else skip fi Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  
+  eq [foreach] :
+     [[MId, Id, St, Events, Events', foreach (VId in E) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| foreach (VId in @) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [foreach] :
+     [[MId, Id, St, Events, Events', result(seq{E @ SeqE}) <| foreach (VId in @) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code foreach (VId in seq{SeqE}) { Code } Code' <<| CS, FS, DEs, IEs, setV(VId, E, MS)] ES, S, Sys, Log] .
+  rl [foreach] :
+----     [[MId, Id, St, Events, Events', result(set{(E # SetE)}) <| foreach (VId in @) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+     [[MId, Id, St, Events, Events', result(set{(E @ SetE)}) <| foreach (VId in @) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   => [[MId, Id, St, Events, Events', Code foreach (VId in set{SetE}) { Code } Code' <<| CS, FS, DEs, IEs, setV(VId, E, MS)] ES, S, Sys, Log] .
+  rl [foreach] :
+     [[MId, Id, St, Events, Events', result(seq{nil}) <| foreach (VId in @) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   => [[MId, Id, St, Events, Events', Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  rl [foreach] :
+     [[MId, Id, St, Events, Events', result(set{nil}) <| foreach (VId in @) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   => [[MId, Id, St, Events, Events', Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [if-then] :
+     [[MId, Id, St, Events, Events', if (E) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| if (@{E}) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [if-then] :
+     [[MId, Id, St, Events, Events', result(BE) <| if (@{E}) { Code } Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', if BE then Code else skip fi Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  
+  eq [if-then-else] :
+     [[MId, Id, St, Events, Events', if (E) { Code } else { Code' } Code'' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| if (@{E}) { Code } else { Code' } Code'' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [if-then-else] :
+     [[MId, Id, St, Events, Events', result(BE) <| if (@{E}) { Code } else { Code' } Code'' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', if BE then Code else Code' fi Code'' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [return] :
+     [[MId, Id, St, Events, Events', return ; <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [return] :
+     [[MId, Id, St, Events, Events', return E ; <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| return @ ; <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log] .
+  eq [return] :
+     [[MId, Id, St, Events, Events', result(E) <| return @ ; <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(E) <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log] .
+
+  eq [function-end] :
+     [[MId, Id, St, Events, Events', skip <<| @ ; Code <| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [function-end] :
+     [[MId, Id, St, Events, Events', @ ; <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [function-end] :
+     [[MId, Id, St, Events, Events', @ ; Code <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log] .
+  eq [block-end] :
+     [[MId, Id, St, Events, Events', skip <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', CS, FS, DEs, IEs, MS] ES, S, Sys, Log] [owise] .
+
+  rl [goto] :
+     [[MId, Id, St, Events, Events', goto Id' ; Code <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  => [[MId, Id, Id', mtq, Events << Events', p2 getStates(get(Machines, Id))[Id'], FS, p4 getStates(get(Machines, Id))[Id'], p5 getStates(get(Machines, Id))[Id'], mtMemory <m| MS] ES, S, (Machines, Functions, Tests), Log] .
+
+  eq [goto] :
+     [[MId, Id, St, Events, Events', goto Id', E ; Code <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| goto Id', @ ; Code <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, (Machines, Functions, Tests), Log] .
+  crl [goto] :
+     [[MId, Id, St, Events, Events', result(E) <| goto Id', @ ; Code <<| CS, FS, DEs, IEs, MM <m| MS] ES, S, (Machines, Functions, Tests), Log]
+   => [[MId, Id, Id', mtq, Events << Events', p2 getStates(get(Machines, Id))[Id'], FS, p4 getStates(get(Machines, Id))[Id'], p5 getStates(get(Machines, Id))[Id'], [VId -> E] <m| MS] ES, S, (Machines, Functions, Tests), Log] 
+   if (VId : Ty) := p1 (getStates(get(Machines, Id))[Id']) .
+
+  ---- announce instructions are ignored
+  eq [event-announce] :
+     [[MId, Id, St, Events, Events', announce EN, E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [event-announce] :
+     [[MId, Id, St, Events, Events', announce EN ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  rl [event-raise] :
+     [[MId, Id, St, Events, Events', raise EN ; Code <<| CS, FS, DEs, IEs, MS <m| Mem] ES, S, Sys, Log]
+  => [[MId, Id, St, Events, EN{noValue} << Events', skip, FS, DEs, IEs, Mem] ES, S, Sys, Log] .
+
+  eq [event-raise] :
+     [[MId, Id, St, Events, Events', raise EN, E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| raise EN, @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  rl [event-raise] :
+     [[MId, Id, St, Events, Events', result(E) <| raise EN, @ ; Code <<| CS, FS, DEs, IEs, MS <m| Mem] ES, S, Sys, Log]
+  => [[MId, Id, St, Events, EN{E} << Events', skip, FS, DEs, IEs, Mem] ES, S, Sys, Log] .
+
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', send E, EN ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| send @, EN ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', send E, VId ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| send @, VId ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  rl [event-send1] :
+     [[MId, Id, St, Events, Events', result(MId') <| send @, EN ; Code <<| CS, FS, DEs, IEs, MS] 
+      [MId', Id', St', Events''', Events'', CS', FS', DEs', IEs', MS'] ES, S, Sys, Log]
+  => [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] 
+      [MId', Id', St', Events''', Events'' << EN{noValue}, CS', FS', DEs', IEs', MS'] ES, S, Sys, Log]
+----  if Events' = mtq ---- TODO: with this condition, an event is not sent if there is one waiting to be handled
+  [print "events: " Events' " <| " EN "{ noValue }"] .
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', send E, EN, E' ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| send @, EN, E' ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', send_`,_`,_;(E, E', E'') Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| send_`,_`,_;(@, E', E'') Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', result(MId') <| send_`,_`,_;(@, E, E') Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', evalEN(E) <| send_`,_`,_;(MId', @, E') Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', result(MId') <| send_`,_`,_;(@, EN, E) Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', eval(E) <| send_`,_`,_;(MId', EN, @) Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [event-send] :
+     [[MId, Id, St, Events, Events', result(EN) <| send_`,_`,_;(MId', @, E) Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+    = [[MId, Id, St, Events, Events', eval(E) <| send_`,_`,_;(MId', EN, @) Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  rl [event-send2] :
+     [[MId, Id, St, Events, Events', result(E) <| send_`,_`,_;(MId', EN, @) Code <<| CS, FS, DEs, IEs, MS] 
+      [MId', Id', St', Events, Events'', CS', FS', DEs', IEs', MS'] ES, S, Sys, Log]
+  => [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] 
+      [MId', Id', St', Events, Events'' << EN{E}, CS', FS', DEs', IEs', MS'] ES, S, Sys, Log]
+----  if Events' = mtq ---- TODO: with this condition, an event is not sent if there is one waiting to be handled
+  [print "events: " Events' " <| " EN "{" E "}"] .
+
+----  rl [halt] :
+----     [[MId, Id, St, halt{noValue} << Events, skip, FS, DEs, IEs, MS] ES, S, Sys, Log]
+----   => ... .
+
+  ---- events to be ignored are removed from the in queue
+  eq [event-ignore] :
+     [MId, Id, St, Events, Events' << EN{noValue} << Events', CS, FS, DEs, EN # IEs, MS]
+   = [MId, Id, St, Events, Events' << Events', CS, FS, DEs, EN # IEs, MS] .
+  eq [event-ignore] :
+     [MId, Id, St, Events, Events' << EN{E} << Events', CS, FS, DEs, EN # IEs, MS]
+   = [MId, Id, St, Events, Events' << Events', CS, FS, DEs, EN # IEs, MS] .
+ 
+  ---- Defer defers the dequeue of the event E in state S until the machine transitions to a non-deferred 
+  ---- state, i.e., a state that does not defer the event E. The position of the event E that is deferred 
+  ---- in state S does not change the FIFO buffer of the machine. 
+  eq [event-deferred] :
+     [[MId, Id, St, Events, EN{noValue} << Events', Code, FS, EN # DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events << EN{noValue}, Events', Code, FS, EN # DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] .
+  eq [event-deferred] :
+     [[MId, Id, St, Events, EN{E} << Events', Code, FS, EN # DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events << EN{E}, Events', Code, FS, EN # DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] .
+
+  ---- deferred events are skipped
+  ---- events are received only if there is no non-deferred event before them
+  crl [event-receive] :
+     [[MId, Id, St, Events, EN{noValue} << Events', skip, FS, DEs, IEs, Mem <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  => [[MId, Id, St, Events, Events', Code, FS, DEs, IEs, mtMemory <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  if (mtNamedTypeSequence, Code) := (p3 getStates(get(Machines, Id))[St])[EN] .
+  crl [event-receive] :
+     [[MId, Id, St, Events, EN{E} << Events', skip, FS, DEs, IEs, Mem <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  => [[MId, Id, St, Events, Events', Code, FS, DEs, IEs, [VId -> E] <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  if (VId : Ty, Code) := (p3 getStates(get(Machines, Id))[St])[EN] .
+  crl [event-receive] :
+     [[MId, Id, St, Events, EN{noValue} << Events', noCode, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+  => [[MId, Id, St, Events, Events', Code, FS, DEs, IEs, mtMemory <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  if (mtNamedTypeSequence, Code) := (p3 getStates(get(Machines, Id))[St])[EN] .
+  crl [event-receive] :
+     [[MId, Id, St, Events, EN{E} << Events', noCode, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+  => [[MId, Id, St, Events, Events', Code, FS, DEs, IEs, [VId -> E] <m| MS] ES, S, (Machines, Functions, Tests), Log]
+  if (VId : Ty, Code) := (p3 getStates(get(Machines, Id))[St])[EN] .
+
+  rl [event-receive1] :
+     ---- TODO: if there are several EN events, should the first one be taken? Now it's non-deterministically taking one 
+     [[MId, Id, St, Events, Events' << EN{noValue} << Events'', receive { case EN : { Code } RCs } Code' <<| CS, FS, DEs, IEs, MS] ES, 
+      S, (Machines, Functions, Tests), Log]
+   => [[MId, Id, St, Events, Events' << Events'', Code Code' <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] .
+  rl [event-receive2] :
+     [[MId, Id, St, Events, Events' << EN{E} << Events'', receive { case EN : (VId : Ty) { Code } RCs } Code' <<| CS, FS, DEs, IEs, Mem <m| MS] ES, 
+      S, (Machines, Functions, Tests), Log]
+   => [[MId, Id, St, Events, Events' << Events'', Code Code' <<| CS, FS, DEs, IEs, [VId -> E] Mem <m| MS] ES, S, (Machines, Functions, Tests), Log] .
+  rl [event-receive1] :
+     [[MId, Id, St, Events, Events' << EN{noValue} << Events'', receive { case EN : { } RCs } Code' <<| CS, FS, DEs, IEs, MS] ES, 
+      S, (Machines, Functions, Tests), Log]
+   => [[MId, Id, St, Events, Events' << Events'', Code' <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] .
+  rl [event-receive2] :
+     [[MId, Id, St, Events, Events' << EN{E} << Events'', receive { case EN : (VId : Ty) { } RCs } Code' <<| CS, FS, DEs, IEs, MS] ES, 
+      S, (Machines, Functions, Tests), Log]
+   => [[MId, Id, St, Events, Events' << Events'', Code' <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] .
+
+  eq [void-function-invocation9] : 
+     [[MId, Id, St, Events, Events', F() ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(F()) <| @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [void-function-invocation10] : 
+     [[MId, Id, St, Events, Events', F(Exprs) ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(F(Exprs)) <| @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ----  op _(_,_) ; : Name EventName Expr -> Sentence .
+  eq [void-function-invocation10-1] : 
+     [[MId, Id, St, Events, Events', F(EN, E) ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(F(EN, E)) <| @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ceq [eval-function-invocation11] : 
+     [[MId, Id, St, Events, Events', eval(F()) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', invocation(mtExprList, NTS, Code', mtMemory) <| Code <<| CS, FS, DEs, IEs, MS] 
+      ES, S, Sys, Log] 
+   if fun(F, NTS, MTy, Code') := getFunction(F, FS) .
+  ceq [eval-function-invocation12] : 
+     [[MId, Id, St, Events, Events', eval(F()) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events, Events', invocation(mtExprList, NTS, Code', mtMemory) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] 
+   if noFunction = getFunction(F, FS) 
+   /\ fun(F, NTS, MTy, Code') := getFunction(F, Functions) .
+
+  ceq[eval-function-invocation13] : 
+     [[MId, Id, St, Events, Events', eval(F(Exprs)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', invocation(Exprs, NTS, Code', mtMemory) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   if fun(F, NTS, MTy, Code') := getFunction(F, FS) .
+  ceq [eval-function-invocation14] : 
+     [[MId, Id, St, Events, Events', eval(F(Exprs)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events, Events', invocation(Exprs, NTS, Code', mtMemory) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] 
+   if noFunction = getFunction(F, FS) 
+   /\ fun(F, NTS, MTy, Code') := getFunction(F, Functions) .
+
+  ----  op _(_,_) ; : Name EventName Expr -> Sentence .
+  ceq[eval-function-invocation13] : 
+     [[MId, Id, St, Events, Events', eval(F(EN, E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', invocation(EN, E, NTS, Code', mtMemory) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   if fun(F, NTS, MTy, Code') := getFunction(F, FS) .
+  ceq [eval-function-invocation14] : 
+     [[MId, Id, St, Events, Events', eval(F(EN, E)) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log]
+   = [[MId, Id, St, Events, Events', invocation(EN, E, NTS, Code', mtMemory) <| Code <<| CS, FS, DEs, IEs, MS] ES, S, (Machines, Functions, Tests), Log] 
+   if noFunction = getFunction(F, FS) 
+   /\ fun(F, NTS, MTy, Code') := getFunction(F, Functions) .
+
+  ---- TODO: non-overloaded functions
+  op getFunction : Name Set{Function} -> Maybe{Function} .
+  eq getFunction(F, (fun(F, NTS, MTy, Code) # FS)) = fun(F, NTS, MTy, Code) .
+  eq getFunction(F, FS) = noFunction [owise] .
+
+  eq [function-invocation1] : 
+     [[MId, Id, St, Events, Events', invocation((Expr, Exprs), (VId : Ty, NTS), Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(Expr) <| invocation((Expr, Exprs), (VId : Ty, NTS), Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [function-invocation3] : 
+     [[MId, Id, St, Events, Events', result(E) <| invocation((Expr, Exprs), (VId : Ty, NTS), Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', invocation(Exprs, NTS, Code, Mem [VId -> E]) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [function-invocation5] : 
+     [[MId, Id, St, Events, Events', invocation(mtExprList, mtNamedTypeSequence, Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| Code' <<| CS, FS, DEs, IEs, Mem <m| MS] ES, S, Sys, Log] .
+  eq [function-invocation6] :  
+     [[MId, Id, St, Events, Events', result(E) <<| Code' <<| CS, FS, DEs, IEs, Mem <m| MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', result(E) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  ----  op _(_,_) ; : Name EventName Expr -> Sentence .
+  eq [function-invocation1] : 
+     [[MId, Id, St, Events, Events', invocation(EN, Expr, (VId : event, VId' : Ty), Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(Expr) <| invocation(EN, @, (VId : event, VId' : Ty), Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [function-invocation3] : 
+     [[MId, Id, St, Events, Events', result(E) <| invocation(EN, @, (VId : event, VId' : Ty), Code, Mem) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', invocation(mtExprList, mtNamedTypeSequence, Code, Mem [VId -> EN] [VId' -> E]) <| Code' <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+----  eq [assert] : 
+----     [[MId, Id, St, Events, Events', assert E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+----   = [[MId, Id, St, Events, Events', eval(E) <| assert @{E} ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+----  eq [assert] : 
+----     [[MId, Id, St, Events, Events', result(true) <| assert @{E} ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+----   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+----  eq [assert] : 
+----     [[MId, Id, St, Events, Events', result(false) <| assert @{E} ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+----   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+
+  eq [assert] : 
+     [[MId, Id, St, Events, Events', assert E, StrE ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| assert @{E}, StrE ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [assert] : 
+     [[MId, Id, St, Events, Events', result(true) <| assert @{E}, StrE ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [assert] : 
+     [[MId, Id, St, Events, Events', result(false) <| assert @{E}, StrE ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(StrE) <| assert @{false}, @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [assert] : 
+     [[MId, Id, St, Events, Events', result(Str) <| assert @{false}, @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, (Log ++ Str) ++ "\n"] .
+
+  eq [print] : 
+     [[MId, Id, St, Events, Events', print StrE ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(StrE) <| print @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+  eq [print] : 
+     [[MId, Id, St, Events, Events', result(Str) <| print @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, (Log ++ Str) ++ "\n"] .
+endm
+

@@ -1,0 +1,101 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module PRIORITY-QUEUE
+---- 
+---- Located at examples/priority-queue/
+---- Date 2024-07-18 16:31:25.920085
+---- 
+--------------------------------------------------------------------
+
+load /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude
+
+mod PRIORITY-QUEUE is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tPriorityQueue .
+  subsort tPriorityQueue < UserDefinedType .
+  op tPriorityQueue : -> UserDefinedTypeName .
+
+
+  --- Constants for function CreatePriorityQueue
+  op CreatePriorityQueue# : -> FunDecl .
+  op CreatePriorityQueue : -> Name .
+  eq CreatePriorityQueue# = fun CreatePriorityQueue() : tPriorityQueue ; .
+
+  --- Constants for function AddElement
+  op AddElement# : -> FunDecl .
+  op AddElement : -> Name .
+  op queue : -> VarId .
+  op elem : -> VarId .
+  op priority : -> IntVarId .
+  eq AddElement# = fun AddElement(queue : tPriorityQueue, elem : any, priority : int) : tPriorityQueue ; .
+
+  --- Constants for function ChooseElement
+  op ChooseElement# : -> FunDecl .
+  op ChooseElement : -> Name .
+  eq ChooseElement# = fun ChooseElement(queue : tPriorityQueue) : any ; .
+
+  --- Constants for function RemoveElement
+  op RemoveElement# : -> FunDecl .
+  op RemoveElement : -> Name .
+  op element : -> VarId .
+  eq RemoveElement# = fun RemoveElement(queue : tPriorityQueue) : (element : any, queue : tPriorityQueue) ; .
+
+  --- Constants for function CountElement
+  op CountElement# : -> FunDecl .
+  op CountElement : -> Name .
+  eq CountElement# = fun CountElement(queue : tPriorityQueue) : int ; .
+
+  --- Constants for machine Client
+  op Client# : -> MachineDecl .
+  op Client : -> UserDefinedTypeName .
+  op Client : -> Name .
+  op Init : -> Name .
+  op RemoveElementsInPriorityOrder# : -> FunDecl .
+  op RemoveElementsInPriorityOrder : -> Name .
+  op AddIntToQueue# : -> FunDecl .
+  op AddIntToQueue : -> Name .
+  op element$String : -> StringVarId .
+  op i : -> IntVarId .
+  op retVal : -> VarId .
+  op elem$Int : -> IntVarId .
+  op p : -> IntVarId .
+
+  eq Client# = machine Client {
+       var queue : tPriorityQueue ;
+
+       start state Init {
+         entry {
+           var element$String : string ;
+           queue = CreatePriorityQueue() ;
+           queue = AddElement(queue, "Hello", 1) ;
+           queue = AddElement(queue, "World", 2) ;
+           queue = AddElement(queue, "!!", 3) ;
+           element$String = ChooseElement(queue) as string ;
+           assert element$String == "Hello" || element$String == "World" || element$String == "!!" ;
+           queue = AddIntToQueue(queue, 123, 4) ;
+           RemoveElementsInPriorityOrder() ;
+         }
+       }
+       fun RemoveElementsInPriorityOrder () {
+         var i : int ;
+         var retVal : (element : any, queue : tPriorityQueue) ;
+         print "--------------" ;
+         while (CountElement(queue) > 0) {
+           retVal = RemoveElement(queue) ;
+           queue = retVal . queue ;
+           print format("{0}", retVal . element) ;
+         }
+         print "--------------" ;
+       }
+
+       fun AddIntToQueue (queue : tPriorityQueue, elem$Int : int, p : int) : tPriorityQueue {
+
+  } .
+
+  --- Constants for test tcCheckPriorityQueue
+  op tcCheckPriorityQueue# : -> TestDecl .
+  op tcCheckPriorityQueue : -> Name .
+  eq tcCheckPriorityQueue# = test tcCheckPriorityQueue [main = Client] :
+    { Client } ; .
+endm

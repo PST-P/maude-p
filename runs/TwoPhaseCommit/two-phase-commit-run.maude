@@ -1,0 +1,5 @@
+load two-phase-commit.maude
+
+frew [3000] execute(tcSingleClientNoFailure, init) .
+frew [2000] execute(tcMultipleClientsNoFailure, init) .
+frew [2000] execute(tcMultipleClientsWithFailure, init) .

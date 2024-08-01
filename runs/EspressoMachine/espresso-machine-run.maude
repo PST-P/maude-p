@@ -1,0 +1,4 @@
+load espresso-machine.maude
+
+frew [1000] execute(tcSaneUserUsingCoffeeMachine, init) .
+frew [1000] execute(tcCrazyUserUsingCoffeeMachine, init) .

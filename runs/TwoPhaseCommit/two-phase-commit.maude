@@ -1,0 +1,696 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module TWO-PHASE-COMMIT
+---- 
+---- Located at ../../Tutorial/2_TwoPhaseCommit/
+---- Date 2024-07-30 02:46:47.176120
+---- 
+--------------------------------------------------------------------
+
+load ../../p-0.5.maude
+
+mod TWO-PHASE-COMMIT is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tTrans .
+  subsort tTrans < UserDefinedType .
+  op tTrans : -> UserDefinedTypeName .
+  op key : -> StringVarId .
+  op val : -> IntVarId .
+  op transId : -> IntVarId .
+  op tTrans : String Int Int -> tTrans .
+  sort tWriteTransReq .
+  subsort tWriteTransReq < UserDefinedType .
+  op tWriteTransReq : -> UserDefinedTypeName .
+  op client : -> MachVarId .
+  op trans : -> VarId .
+  op tWriteTransReq : MachId tTrans -> tWriteTransReq .
+  sort tWriteTransResp .
+  subsort tWriteTransResp < UserDefinedType .
+  op tWriteTransResp : -> UserDefinedTypeName .
+  op status : -> VarId .
+  op tWriteTransResp : Int tTransStatus -> tWriteTransResp .
+  sort tReadTransReq .
+  subsort tReadTransReq < UserDefinedType .
+  op tReadTransReq : -> UserDefinedTypeName .
+  op tReadTransReq : MachId String -> tReadTransReq .
+  sort tReadTransResp .
+  subsort tReadTransResp < UserDefinedType .
+  op tReadTransResp : -> UserDefinedTypeName .
+  op tReadTransResp : String Int tTransStatus -> tReadTransResp .
+  sort tTransStatus .
+  subsort tTransStatus < UserDefinedType .
+  op tTransStatus : -> UserDefinedTypeName .
+  ops SUCCESS ERROR TIMEOUT : -> tTransStatus .
+  sort tPrepareReq .
+  subsort tPrepareReq < UserDefinedType .
+  op tPrepareReq : -> UserDefinedTypeName .
+  sort tPrepareResp .
+  subsort tPrepareResp < UserDefinedType .
+  op tPrepareResp : -> UserDefinedTypeName .
+  op participant : -> MachVarId .
+  op tPrepareResp : MachId Int tTransStatus -> tPrepareResp .
+  sort t2PCConfig .
+  subsort t2PCConfig < UserDefinedType .
+  op t2PCConfig : -> UserDefinedTypeName .
+  op numClients : -> IntVarId .
+  op numParticipants : -> IntVarId .
+  op numTransPerClient : -> IntVarId .
+  op failParticipants : -> IntVarId .
+  op t2PCConfig : Int Int Int Int -> t2PCConfig .
+
+  --- Constants for event declarations
+  op eWriteTransReq : -> EventName .
+  op eWriteTransResp : -> EventName .
+  op eReadTransReq : -> EventName .
+  op eReadTransResp : -> EventName .
+  op ePrepareReq : -> EventName .
+  op ePrepareResp : -> EventName .
+  op eCommitTrans : -> EventName .
+  op eAbortTrans : -> EventName .
+  op eInformCoordinator : -> EventName .
+  op eDelayNodeFailure : -> EventName .
+  op eShutDown : -> EventName .
+  op eStartTimer : -> EventName .
+  op eCancelTimer : -> EventName .
+  op eTimeOut : -> EventName .
+  op eDelayedTimeOut : -> EventName .
+  op eMonitor-AtomicityInitialize : -> EventName .
+
+  --- Constants for machine Coordinator
+  op Coordinator# : -> MachineDecl .
+  op Coordinator : -> UserDefinedTypeName .
+  op Coordinator : -> Name .
+  op participants : -> SetVarId .
+  op currentWriteTransReq : -> VarId .
+  op seenTransIds : -> SetVarId .
+  op timer : -> MachVarId .
+  op Init : -> Name .
+  op WaitForTransactions : -> Name .
+  op countPrepareResponses : -> IntVarId .
+  op WaitForPrepareResponses : -> Name .
+  op DoGlobalAbort# : -> FunDecl .
+  op DoGlobalAbort : -> Name .
+  op DoGlobalCommit# : -> FunDecl .
+  op DoGlobalCommit : -> Name .
+  op BroadcastToAllParticipants# : -> FunDecl .
+  op BroadcastToAllParticipants : -> Name .
+  op payload$Set : -> SetVarId .
+  op wTrans : -> VarId .
+  op rTrans : -> VarId .
+  op resp : -> VarId .
+  op respStatus : -> VarId .
+  op i : -> IntVarId .
+  op message : -> VarId .
+  op payload : -> VarId .
+
+  eq Coordinator# = machine Coordinator {
+       var participants : set[Participant] ;
+       var currentWriteTransReq : tWriteTransReq ;
+       var seenTransIds : set[int] ;
+       var timer : Timer ;
+       var countPrepareResponses : int ;
+
+       start state Init {
+         entry (payload$Set : set[Participant]) {
+           participants = payload$Set ;
+           timer = CreateTimer(this) ;
+           BroadcastToAllParticipants(eInformCoordinator, this) ;
+           goto WaitForTransactions ;
+         }
+       }
+
+       state WaitForTransactions {
+         on eWriteTransReq do (wTrans : tWriteTransReq) {
+           if (wTrans . trans . transId in seenTransIds) {
+             send wTrans . client, eWriteTransResp, (transId = wTrans . trans . transId, status = TIMEOUT) ;
+             return ;
+           }
+           currentWriteTransReq = wTrans ;
+           BroadcastToAllParticipants(ePrepareReq, wTrans . trans) ;
+           StartTimer(timer) ;
+           goto WaitForPrepareResponses ;
+         }
+
+         on eReadTransReq do (rTrans : tReadTransReq) {
+           send choose ( participants ), eReadTransReq, rTrans ;
+         }
+
+         ignore ePrepareResp, eTimeOut ;
+       }
+
+       state WaitForPrepareResponses {
+         defer eWriteTransReq ;
+
+         on ePrepareResp do (resp : tPrepareResp) {
+           if (currentWriteTransReq . trans . transId == resp . transId) {
+             if (resp . status == SUCCESS) {
+               countPrepareResponses = countPrepareResponses + 1 ;
+               if (countPrepareResponses == sizeof ( participants )) {
+                 DoGlobalCommit() ;
+                 goto WaitForTransactions ;
+               }
+             }
+             else{
+               DoGlobalAbort(ERROR) ;
+               goto WaitForTransactions ;
+             }
+           }
+         }
+
+         on eTimeOut goto WaitForTransactions with {
+           DoGlobalAbort(TIMEOUT) ;
+        }
+
+         on eReadTransReq do (rTrans : tReadTransReq) {
+           send choose ( participants ), eReadTransReq, rTrans ;
+         }
+
+         exit {
+           countPrepareResponses = 0 ;
+         }
+       }
+       fun DoGlobalAbort (respStatus : tTransStatus) {
+         BroadcastToAllParticipants(eAbortTrans, currentWriteTransReq . trans . transId) ;
+         send currentWriteTransReq . client, eWriteTransResp, (transId = currentWriteTransReq . trans . transId, status = respStatus) ;
+         if (respStatus =/= TIMEOUT) {
+           CancelTimer(timer) ;
+         }
+       }
+
+       fun DoGlobalCommit () {
+         BroadcastToAllParticipants(eCommitTrans, currentWriteTransReq . trans . transId) ;
+         send currentWriteTransReq . client, eWriteTransResp, (transId = currentWriteTransReq . trans . transId, status = SUCCESS) ;
+         CancelTimer(timer) ;
+       }
+
+       fun BroadcastToAllParticipants (message : event, payload : any) {
+         var i : int ;
+         while (i < sizeof ( participants )) {
+           ---- send participants[i], message, payload ;
+           send_`,_`,_;(participants[i], message, payload)
+           i = i + 1 ;
+         }
+       }
+
+  } .
+
+  --- Constants for machine FailureInjector
+  op FailureInjector# : -> MachineDecl .
+  op FailureInjector : -> UserDefinedTypeName .
+  op FailureInjector : -> Name .
+  op nFailures : -> IntVarId .
+  op nodes : -> SetVarId .
+  op FailOneNode : -> Name .
+  op config : -> VarId .
+  op fail : -> MachVarId .
+
+  eq FailureInjector# = machine FailureInjector {
+       var nFailures : int ;
+       var nodes : set[machine] ;
+
+       start state Init {
+         entry (config : (nodes : set[machine], nFailures : int)) {
+           nFailures = config . nFailures ;
+           nodes = config . nodes ;
+           assert nFailures < sizeof ( nodes ), "" ;
+           goto FailOneNode ;
+         }
+       }
+
+       state FailOneNode {
+         entry {
+           var fail : machine ;
+           if (nFailures == 0) {
+             raise halt ;
+           }
+           else{
+             if ($) {
+               fail = choose ( nodes ) ;
+               send fail, eShutDown, fail ;
+               nodes -= ( ( fail ) ) ;
+               nFailures = nFailures - 1 ;
+             }
+             else{
+               send this, eDelayNodeFailure ;
+             }
+           }
+         }
+
+         on eDelayNodeFailure goto FailOneNode ;
+       }
+  } .
+
+  --- Constants for function CreateFailureInjector
+  op CreateFailureInjector# : -> FunDecl .
+  op CreateFailureInjector : -> Name .
+  eq CreateFailureInjector# = fun CreateFailureInjector(config : (nodes : set[machine], nFailures : int)) {
+    new FailureInjector(config) ;
+  } .
+
+  --- Constants for module FailureInjector
+  op FailureInjector : -> Name .
+  --- module FailureInjector = { FailureInjector } ; .
+
+  --- Constants for function UnReliableSend
+  op UnReliableSend# : -> FunDecl .
+  op UnReliableSend : -> Name .
+  op target : -> MachVarId .
+  eq UnReliableSend# = fun UnReliableSend(target : machine, message : event, payload : any) {
+    if ($) {
+      ---- send target, message, payload ;
+      send_`,_`,_;(target, message, payload)
+    }
+  } .
+
+  --- Constants for function UnReliableBroadCast
+  op UnReliableBroadCast# : -> FunDecl .
+  op UnReliableBroadCast : -> Name .
+  op ms : -> SetVarId .
+  op ev : -> VarId .
+  eq UnReliableBroadCast# = fun UnReliableBroadCast(ms : set[machine], ev : event, payload : any) {
+    var i : int ;
+    while (i < sizeof ( ms )) {
+      UnReliableSend(ms[i], ev, payload) ;
+      i = i + 1 ;
+    }
+  } .
+
+  --- Constants for function ReliableBroadCast
+  op ReliableBroadCast# : -> FunDecl .
+  op ReliableBroadCast : -> Name .
+  eq ReliableBroadCast# = fun ReliableBroadCast(ms : set[machine], ev : event, payload : any) {
+    var i : int ;
+    while (i < sizeof ( ms )) {
+      ---- send ms[i], ev, payload ;
+      send_`,_`,_;(ms[i], ev, payload)
+      i = i + 1 ;
+    }
+  } .
+
+  --- Constants for machine Participant
+  op Participant# : -> MachineDecl .
+  op Participant : -> UserDefinedTypeName .
+  op Participant : -> Name .
+  op kvStore : -> MapVarId .
+  op pendingWriteTrans : -> MapVarId .
+  op coordinator : -> MachVarId .
+  op WaitForRequests : -> Name .
+  op coor : -> MachVarId .
+  op prepareReq : -> VarId .
+  op req : -> VarId .
+
+  eq Participant# = machine Participant {
+       var kvStore : map[string,tTrans] ;
+       var pendingWriteTrans : map[int,tTrans] ;
+       var coordinator : Coordinator ;
+
+       start state Init {
+         on eInformCoordinator goto WaitForRequests with (coor : Coordinator) {
+           coordinator = coor ;
+        }
+
+         defer eShutDown ;
+       }
+
+       state WaitForRequests {
+         on eAbortTrans do (transId : int) {
+           assert transId in pendingWriteTrans, format("Abort request for a non-pending transaction, transId: {0}, pendingTrans set: {1}", transId, pendingWriteTrans) ;
+           pendingWriteTrans -= ( ( transId ) ) ;
+         }
+
+         on eCommitTrans do (transId : int) {
+           assert transId in pendingWriteTrans, format("Commit request for a non-pending transaction, transId: {0}, pendingTrans set: {1}", transId, pendingWriteTrans) ;
+           kvStore[pendingWriteTrans[transId] . key] = pendingWriteTrans[transId] ;
+           pendingWriteTrans -= ( ( transId ) ) ;
+         }
+
+         on ePrepareReq do (prepareReq : tPrepareReq) {
+           assert ! ( prepareReq . transId in pendingWriteTrans ), format("Duplicate transaction ids not allowed!, received transId: {0}, pending transactions: {1}", prepareReq . transId, pendingWriteTrans) ;
+           pendingWriteTrans[prepareReq . transId] = prepareReq ;
+           if (! ( prepareReq . key in kvStore ) || ( prepareReq . key in kvStore && prepareReq . transId > kvStore[prepareReq . key] . transId )) {
+             send coordinator, ePrepareResp, (participant = this, transId = prepareReq . transId, status = SUCCESS) ;
+           }
+           else{
+             send coordinator, ePrepareResp, (participant = this, transId = prepareReq . transId, status = ERROR) ;
+           }
+         }
+
+         on eReadTransReq do (req : tReadTransReq) {
+           if (req . key in kvStore) {
+             send req . client, eReadTransResp, (key = req . key, val = kvStore[req . key] . val, status = SUCCESS) ;
+           }
+           else{
+             send req . client, eReadTransResp, (key = "", val = - 1, status = ERROR) ;
+           }
+         }
+
+         on eShutDown do {
+           raise halt ;
+         }
+       }
+  } .
+
+  --- Constants for machine Timer
+  op Timer# : -> MachineDecl .
+  op Timer : -> UserDefinedTypeName .
+  op Timer : -> Name .
+  op WaitForTimerRequests : -> Name .
+  op TimerStarted : -> Name .
+  op #client : -> MachVarId .
+
+  eq Timer# = machine Timer {
+       var client : machine ;
+
+       start state Init {
+         entry (#client : machine) {
+           client = #client ;
+           goto WaitForTimerRequests ;
+         }
+       }
+
+       state WaitForTimerRequests {
+         on eStartTimer goto TimerStarted ;
+
+         ignore eCancelTimer, eDelayedTimeOut ;
+       }
+
+       state TimerStarted {
+         defer eStartTimer ;
+
+         entry {
+           if ($) {
+             send client, eTimeOut ;
+             goto WaitForTimerRequests ;
+           }
+           else{
+             send this, eDelayedTimeOut ;
+           }
+         }
+
+         on eDelayedTimeOut goto TimerStarted ;
+
+         on eCancelTimer goto WaitForTimerRequests ;
+       }
+  } .
+
+  --- Constants for function CreateTimer
+  op CreateTimer# : -> FunDecl .
+  op CreateTimer : -> Name .
+  eq CreateTimer# = fun CreateTimer(client : machine) : Timer {
+    return new Timer(client) ;
+  } .
+
+  --- Constants for function StartTimer
+  op StartTimer# : -> FunDecl .
+  op StartTimer : -> Name .
+  eq StartTimer# = fun StartTimer(timer : Timer) {
+    send timer, eStartTimer ;
+  } .
+
+  --- Constants for function CancelTimer
+  op CancelTimer# : -> FunDecl .
+  op CancelTimer : -> Name .
+  eq CancelTimer# = fun CancelTimer(timer : Timer) {
+    send timer, eCancelTimer ;
+  } .
+
+  --- Constants for module Timer
+  op Timer : -> Name .
+  --- module Timer = { Timer } ; .
+
+  --- Constants for module TwoPhaseCommit
+  op TwoPhaseCommit : -> Name .
+  --- module TwoPhaseCommit = union { Coordinator, Participant }, Timer ; .
+
+  --- Constants for monitor AtomicityInvariant
+  op AtomicityInvariant# : -> SpecDecl .
+  op AtomicityInvariant : -> UserDefinedTypeName .
+  op AtomicityInvariant : -> Name .
+  op participantsResponse : -> MapVarId .
+  op WaitForEvents : -> Name .
+  op n : -> IntVarId .
+
+  eq AtomicityInvariant# = spec AtomicityInvariant observes eWriteTransResp, ePrepareResp, eMonitor-AtomicityInitialize {
+       var participantsResponse : map[int,map[tTransStatus,int]] ;
+       var numParticipants : int ;
+
+       start state Init {
+         on eMonitor-AtomicityInitialize goto WaitForEvents with (n : int) {
+           numParticipants = n ;
+        }
+       }
+
+       state WaitForEvents {
+         on ePrepareResp do (resp : tPrepareResp) {
+           var transId : int ;
+           transId = resp . transId ;
+           if (! ( transId in participantsResponse )) {
+             participantsResponse[transId] = default ( map[tTransStatus,int] ) ;
+             participantsResponse[transId][SUCCESS] = 0 ;
+             participantsResponse[transId][ERROR] = 0 ;
+           }
+           participantsResponse[transId][resp . status] = participantsResponse[transId][resp . status] + 1 ;
+         }
+
+         on eWriteTransResp do (resp : tWriteTransResp) {
+           assert ( resp . transId in participantsResponse || resp . status == TIMEOUT ), format("Write transaction was responded to the client without receiving any responses from the participants!") ;
+           if (resp . status == SUCCESS) {
+             assert participantsResponse[resp . transId][SUCCESS] == numParticipants, format("Write transaction was responded as committed before receiving success from all participants. ") + format("participants sent success: {0}, participants sent error: {1}", participantsResponse[resp . transId][SUCCESS], participantsResponse[resp . transId][ERROR]) ;
+           }
+           else{
+             if (resp . status == ERROR) {
+               assert participantsResponse[resp . transId][ERROR] > 0, format("Write transaction {0} was responded as failed before receiving error from atleast one participant.", resp . transId) + format("participants sent success: {0}, participants sent error: {1}", participantsResponse[resp . transId][SUCCESS], participantsResponse[resp . transId][ERROR]) ;
+             }
+           }
+           participantsResponse -= ( ( resp . transId ) ) ;
+         }
+       }
+  } .
+
+  --- Constants for monitor Progress
+  op Progress# : -> SpecDecl .
+  op Progress : -> UserDefinedTypeName .
+  op Progress : -> Name .
+  op pendingTransactions : -> IntVarId .
+  op WaitForResponses : -> Name .
+  op AllTransactionsFinished : -> Name .
+
+  eq Progress# = spec Progress observes eWriteTransReq, eWriteTransResp {
+       var pendingTransactions : int ;
+
+       start state Init {
+         on eWriteTransReq goto WaitForResponses with {
+           pendingTransactions = pendingTransactions + 1 ;
+        }
+       }
+
+       hot state WaitForResponses {
+         on eWriteTransResp do {
+           pendingTransactions = pendingTransactions - 1 ;
+           if (pendingTransactions == 0) {
+             goto AllTransactionsFinished ;
+           }
+         }
+
+         on eWriteTransReq do {
+           pendingTransactions = pendingTransactions + 1 ;
+         }
+       }
+
+       cold state AllTransactionsFinished {
+         on eWriteTransReq goto WaitForResponses with {
+           pendingTransactions = pendingTransactions + 1 ;
+        }
+       }
+  } .
+
+  --- Constants for machine Client
+  op Client# : -> MachineDecl .
+  op Client : -> UserDefinedTypeName .
+  op Client : -> Name .
+  op currTransaction : -> VarId .
+  op N : -> IntVarId .
+  op id : -> IntVarId .
+  op SendWriteTransaction : -> Name .
+  op ConfirmTransaction : -> Name .
+  op writeResp : -> VarId .
+  op readResp : -> VarId .
+
+  eq Client# = machine Client {
+       var coordinator : Coordinator ;
+       var currTransaction : tTrans ;
+       var N : int ;
+       var id : int ;
+
+       start state Init {
+         entry (payload : (coordinator : Coordinator, n : int, id : int)) {
+           coordinator = payload . coordinator ;
+           N = payload . n ;
+           id = payload . id ;
+           goto SendWriteTransaction ;
+         }
+       }
+
+       state SendWriteTransaction {
+         entry {
+           currTransaction = ChooseRandomTransaction(id * 100 + N) ;
+           send coordinator, eWriteTransReq, (client = this, trans = currTransaction) ;
+         }
+
+         on eWriteTransResp goto ConfirmTransaction ;
+       }
+
+       state ConfirmTransaction {
+         entry (writeResp : tWriteTransResp) {
+           if (writeResp . status == SUCCESS) {
+             send coordinator, eReadTransReq, (client = this, key = currTransaction . key) ;
+             receive {
+               case eReadTransResp : (readResp : tReadTransResp) {
+               assert readResp . key == currTransaction . key && readResp . val == currTransaction . val, format("Record read is not same as what was written by the client:: read - {0}, written - {1}", readResp . val, currTransaction . val) ;
+               }
+             }
+           }
+           if (N > 0) {
+             N = N - 1 ;
+             goto SendWriteTransaction ;
+           }
+         }
+       }
+  } .
+
+  --- Constants for function ChooseRandomTransaction
+  op ChooseRandomTransaction# : -> FunDecl .
+  op ChooseRandomTransaction : -> Name .
+  op uniqueId : -> IntVarId .
+  eq ChooseRandomTransaction# = fun ChooseRandomTransaction(uniqueId : int) : (key : string, val : int, transId : int) ; .
+
+  --- Constants for module TwoPCClient
+  op TwoPCClient : -> Name .
+  --- module TwoPCClient = { Client } ; .
+
+  --- Constants for function SetUpTwoPhaseCommitSystem
+  op SetUpTwoPhaseCommitSystem# : -> FunDecl .
+  op SetUpTwoPhaseCommitSystem : -> Name .
+  eq SetUpTwoPhaseCommitSystem# = fun SetUpTwoPhaseCommitSystem(config : t2PCConfig) {
+    var coordinator : Coordinator ;
+    var participants : set[Participant] ;
+    var i : int ;
+    while (i < config . numParticipants) {
+      participants += ( new Participant ( ) ) ;
+      i = i + 1 ;
+    }
+    InitializeTwoPhaseCommitSpecifications(config . numParticipants) ;
+    coordinator = new Coordinator(participants) ;
+    i = 0 ;
+    while (i < config . numClients) {
+      new Client((coordinator = coordinator, n = config . numTransPerClient, id = i + 1)) ;
+      i = i + 1 ;
+    }
+    if (config . failParticipants > 0) {
+      CreateFailureInjector(( nodes = participants, nFailures = config . failParticipants )) ;
+    }
+  } .
+
+  --- Constants for function InitializeTwoPhaseCommitSpecifications
+  op InitializeTwoPhaseCommitSpecifications# : -> FunDecl .
+  op InitializeTwoPhaseCommitSpecifications : -> Name .
+  eq InitializeTwoPhaseCommitSpecifications# = fun InitializeTwoPhaseCommitSpecifications(numParticipants : int) {
+    announce eMonitor-AtomicityInitialize, numParticipants ;
+  } .
+
+  --- Constants for machine SingleClientNoFailure
+  op SingleClientNoFailure# : -> MachineDecl .
+  op SingleClientNoFailure : -> UserDefinedTypeName .
+  op SingleClientNoFailure : -> Name .
+
+  eq SingleClientNoFailure# = machine SingleClientNoFailure {
+
+       start state Init {
+         entry {
+           var config : t2PCConfig ;
+           config = ( numClients = 1, numParticipants = 3, numTransPerClient = 2, failParticipants = 0 ) ;
+           SetUpTwoPhaseCommitSystem(config) ;
+         }
+       }
+  } .
+
+  --- Constants for machine MultipleClientsNoFailure
+  op MultipleClientsNoFailure# : -> MachineDecl .
+  op MultipleClientsNoFailure : -> UserDefinedTypeName .
+  op MultipleClientsNoFailure : -> Name .
+
+  eq MultipleClientsNoFailure# = machine MultipleClientsNoFailure {
+
+       start state Init {
+         entry {
+           var config : t2PCConfig ;
+           config = ( numClients = 2, numParticipants = 3, numTransPerClient = 2, failParticipants = 0 ) ;
+           SetUpTwoPhaseCommitSystem(config) ;
+         }
+       }
+  } .
+
+  --- Constants for machine MultipleClientsWithFailure
+  op MultipleClientsWithFailure# : -> MachineDecl .
+  op MultipleClientsWithFailure : -> UserDefinedTypeName .
+  op MultipleClientsWithFailure : -> Name .
+
+  eq MultipleClientsWithFailure# = machine MultipleClientsWithFailure {
+
+       start state Init {
+         entry {
+           var config : t2PCConfig ;
+           config = ( numClients = 2, numParticipants = 3, numTransPerClient = 2, failParticipants = 1 ) ;
+           SetUpTwoPhaseCommitSystem(config) ;
+         }
+       }
+  } .
+
+  --- Constants for test tcSingleClientNoFailure
+  op tcSingleClientNoFailure# : -> TestDecl .
+  op tcSingleClientNoFailure : -> Name .
+  eq tcSingleClientNoFailure# = test tcSingleClientNoFailure [main = SingleClientNoFailure] :
+    union TwoPhaseCommit, TwoPCClient, FailureInjector, { SingleClientNoFailure } ; .
+
+  --- Constants for test tcMultipleClientsNoFailure
+  op tcMultipleClientsNoFailure# : -> TestDecl .
+  op tcMultipleClientsNoFailure : -> Name .
+  eq tcMultipleClientsNoFailure# = test tcMultipleClientsNoFailure [main = MultipleClientsNoFailure] :
+    assert AtomicityInvariant, Progress in ( union TwoPhaseCommit, TwoPCClient, FailureInjector, { MultipleClientsNoFailure } ) ; .
+
+  --- Constants for test tcMultipleClientsWithFailure
+  op tcMultipleClientsWithFailure# : -> TestDecl .
+  op tcMultipleClientsWithFailure : -> Name .
+  eq tcMultipleClientsWithFailure# = test tcMultipleClientsWithFailure [main = MultipleClientsWithFailure] :
+    assert Progress in ( union TwoPhaseCommit, TwoPCClient, FailureInjector, { MultipleClientsWithFailure } ) ; .
+endm
+
+mod TWO-PHASE-COMMIT-RUN is
+  inc TWO-PHASE-COMMIT .
+
+  op init : -> System .
+  eq init = init([Coordinator#]
+                 [FailureInjector#]
+                 [Participant#]
+                 [Timer#]
+                 [Client#]
+                 [SingleClientNoFailure#]
+                 [MultipleClientsNoFailure#]
+                 [MultipleClientsWithFailure#]
+                 [AtomicityInvariant#]
+                 [Progress#]
+                 [CreateFailureInjector#]
+                 [UnReliableSend#]
+                 [UnReliableBroadCast#]
+                 [ReliableBroadCast#]
+                 [CreateTimer#]
+                 [StartTimer#]
+                 [CancelTimer#]
+                 [ChooseRandomTransaction#]
+                 [SetUpTwoPhaseCommitSystem#]
+                 [InitializeTwoPhaseCommitSpecifications#]
+                 [tcSingleClientNoFailure#]
+                 [tcMultipleClientsNoFailure#]
+                 [tcMultipleClientsWithFailure#]) .
+endm

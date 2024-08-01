@@ -1,0 +1,82 @@
+sload client-server.maude 
+
+sload model-checker 
+
+mod CLIENT-SERVER-PREDS is
+  inc CLIENT-SERVER-RUN .
+  inc SATISFACTION .
+
+  subsort SystemExecState < State .
+  op machine_at_ : Name Name -> Prop .
+  op all clients at_ : Name -> Prop .
+  op event_for_ : EventName Name -> Prop .
+  vars MId MId' : MachId .
+  vars Events Events' Events'' : Queue{Event} .
+  vars CS CS' : [CodeStack] .
+  vars FS FS' : Set{Function} .
+  vars MS MS' : MemoryStack .
+  var  MM : Memory .
+  var  N : Nat .
+  var  ES : ExecState .
+  var  S : Nat .
+  var  Sys : System .
+  var  Log : String .
+  vars M X Y : Name .
+  vars Expr : [Expr] .
+  var  EN : EventName .
+  var  State : State .
+  vars DEs DEs' IEs IEs' : Set{EventName} . 
+
+  eq [ [ MId, M, X, Events, Events', CS, FS, DEs, IEs, MS ] ES, S, Sys, Log ] |= machine M at X = true .
+  eq [ [ MId, M, X, Events, Events' << EN{noValue} << Events'', CS, FS, DEs, IEs, MS ] ES, S, Sys, Log ] |= event EN for M = true .
+  eq [ [ MId, M, X, Events, Events' << EN{Expr} << Events'', CS, FS, DEs, IEs, MS ] ES, S, Sys, Log ] |= event EN for M = true .
+  eq [ [ id(0), M, Init, Events, mtq, skip, empty, DEs, IEs, MS ] 
+       [ MId, Client, X, Events', Events'', CS, FS, DEs', IEs', MS' ] ES, S, Sys, Log ] |= all clients at Y 
+    = X .==. Y and [ [ id(0), M, Init, Events, mtq, skip, empty, DEs, IEs, MS ] ES, S, Sys, Log ] |= all clients at Y .
+  eq [ [ id(0), M, Init, Events, mtq, noCode, empty, DEs, IEs, MS ] 
+       [ MId, Client, X, Events', Events'', CS, FS, DEs', IEs', MS' ] ES, S, Sys, Log ] |= all clients at Y 
+    = X .==. Y and [ [ id(0), M, Init, Events, mtq, noCode, empty, DEs, IEs, MS ] ES, S, Sys, Log ] |= all clients at Y .
+  eq [ [ id(0), M, Init, Events, mtq, skip, empty, DEs, IEs, MS ] ES, S, Sys, Log ] |= all clients at X 
+    = true [owise] . 
+  eq [ [ id(0), M, Init, Events, mtq, noCode, empty, DEs, IEs, MS ] ES, S, Sys, Log ] |= all clients at X 
+    = true [owise] . 
+
+  op number of _ machines in _ : Name State -> Nat .
+  eq number of M machines in [ [ MId, M, X, Events, Events', CS, FS, DEs, IEs, MS ] ES, S, Sys, Log ] 
+    = s_ (number of M machines in [ ES, S, Sys, Log ]) .
+  eq number of M machines in [ ES, S, Sys, Log ] = 0 [owise] .
+
+  op number of client machines in _ at _ : State Name  -> Nat .
+  eq number of client machines in [ [ MId, M, X, Events, Events', CS, FS, DEs, IEs, MS ] ES, S, Sys, Log ] at X
+    = s_ (number of client machines in [ ES, S, Sys, Log ] at X) .
+  eq number of client machines in [ ES, S, Sys, Log ] at X = 0 [owise] .
+
+  op allClientsAt : State Name -> Nat .
+  ceq allClientsAt([ [ id(0), M, Init, Events, mtq, skip, empty, DEs, IEs, MS ] 
+                     [ MId, Client, X, Events, Events', CS, FS, DEs', IEs', MS' ] ES, S, Sys, Log ], Y)
+    = 0
+    if X =/= Y .
+  eq allClientsAt([ ES, S, Sys, Log ], X) = 1 [owise] .
+
+----  var SES : SystemExecState .
+----  crl [id] : SES => SES if SES |= all clients at NoMoneyToWithDraw .
+endm
+
+eof
+frewrite [1000] in CLIENT-SERVER-PREDS : execute(tcTwoClients, init) .
+
+search [1,100] execute(tcMultipleClients, init)
+          =>* SES:SystemExecState 
+          s.t. SES:SystemExecState |= all clients at NoMoneyToWithDraw .
+
+search [1,100] execute(tcTwoClients, init)
+          =>* SES:SystemExecState 
+          s.t. SES:SystemExecState |= all clients at NoMoneyToWithDraw .
+
+search [1,100] execute(tcTwoClients, init)
+          =>! SES:SystemExecState 
+          s.t. SES:SystemExecState |= all clients at NoMoneyToWithDraw =/= true .
+
+
+Number of steps until all clients are in the NoMoneyToWithDraw state.
+

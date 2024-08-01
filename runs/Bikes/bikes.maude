@@ -1,0 +1,982 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module BIKES
+---- 
+---- Located at ../../Bikes/
+---- Date 2024-07-30 23:54:14.794087
+---- 
+--------------------------------------------------------------------
+
+load ../../p-0.5.maude
+
+mod BIKES is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tObserver .
+  subsort tObserver < UserDefinedType .
+  op tObserver : -> UserDefinedTypeName .
+
+  --- Constants for event declarations
+  op install : -> EventName .
+  op piece : -> StringVarId .
+  op price : -> FloatVarId .
+  op weight : -> FloatVarId .
+  op load : -> FloatVarId .
+  op uninstall : -> EventName .
+  op replace : -> EventName .
+  op pieceOld : -> StringVarId .
+  op priceOld : -> FloatVarId .
+  op weightOld : -> FloatVarId .
+  op loadOld : -> FloatVarId .
+  op pieceNew : -> StringVarId .
+  op priceNew : -> FloatVarId .
+  op weightNew : -> FloatVarId .
+  op loadNew : -> FloatVarId .
+  op sell : -> EventName .
+  op deploy : -> EventName .
+  op newBike : -> EventName .
+  op bike : -> MachVarId .
+  op received : -> EventName .
+  op create : -> EventName .
+  op maintain : -> EventName .
+  op book : -> EventName .
+  op music : -> EventName .
+  op light : -> EventName .
+  op obreak : -> EventName .
+  op ostart : -> EventName .
+  op stop : -> EventName .
+  op gps : -> EventName .
+  op naviApp : -> EventName .
+  op guideApp : -> EventName .
+  op park : -> EventName .
+  op assistance : -> EventName .
+  op dump : -> EventName .
+  op getBike : -> EventName .
+  op noBikeAvailable : -> EventName .
+
+  --- Constants for machine Bike
+  op Bike# : -> MachineDecl .
+  op Bike : -> UserDefinedTypeName .
+  op Bike : -> Name .
+  op pieces : -> SetVarId .
+  op light$Bool : -> BoolVarId .
+  op music$Bool : -> BoolVarId .
+  op gps$Bool : -> BoolVarId .
+  op guideApp$Bool : -> BoolVarId .
+  op naviApp$Bool : -> BoolVarId .
+  op Init : -> Name .
+  op Factory : -> Name .
+  op Deposit : -> Name .
+  op Parked : -> Name .
+  op Moving : -> Name .
+  op Halted : -> Name .
+  op Broken : -> Name .
+  op Trash : -> Name .
+  op input : -> VarId .
+  op initialPrice : -> FloatVarId .
+  op initialWeight : -> FloatVarId .
+  op initialLoad : -> FloatVarId .
+  op u : -> MachVarId .
+
+  eq Bike# = machine Bike {
+       var pieces : set[string] ;
+       var price : float ;
+       var weight : float ;
+       var load : float ;
+       var light$Bool : bool ;
+       var music$Bool : bool ;
+       var gps$Bool : bool ;
+       var guideApp$Bool : bool ;
+       var naviApp$Bool : bool ;
+
+       start state Init {
+         entry (input : (initialPrice : float, initialWeight : float, initialLoad : float)) {
+           goto Factory, input ;
+         }
+       }
+
+       hot state Factory {
+         entry (input : (initialPrice : float, initialWeight : float, initialLoad : float)) {
+           price = input . initialPrice ;
+           weight = input . initialWeight ;
+           load = input . initialLoad ;
+           light$Bool = false ;
+           music$Bool = false ;
+           gps$Bool = false ;
+           guideApp$Bool = false ;
+           naviApp$Bool = false ;
+         }
+
+         on install do (input : (piece : string, price : float, weight : float, load : float)) {
+           pieces += ( input . piece ) ;
+           price = price + input . price ;
+           weight = weight + input . weight ;
+           load = load + input . load ;
+         }
+
+         on replace do (input : (pieceOld : string, priceOld : float, weightOld : float, loadOld : float, pieceNew : string, priceNew : float, weightNew : float, loadNew : float)) {
+           pieces -= ( input . pieceOld ) ;
+           pieces += ( input . pieceNew ) ;
+           price = price - input . priceOld + input . priceNew ;
+           weight = weight - input . weightOld + input . weightNew ;
+           load = load - input . loadOld + input . loadNew ;
+         }
+
+         on sell do {
+           goto Deposit ;
+         }
+       }
+
+       hot state Deposit {
+         on install do (input : (piece : string, price : float, weight : float, load : float)) {
+           price = price + input . price ;
+           weight = weight + input . weight ;
+           load = load + input . load ;
+           pieces += ( input . piece ) ;
+         }
+
+         on uninstall do (input : (piece : string, price : float, weight : float, load : float)) {
+           price = price - input . price ;
+           weight = weight - input . weight ;
+           load = load - input . load ;
+           pieces -= ( ( input . piece ) ) ;
+         }
+
+         on replace do (input : (pieceOld : string, priceOld : float, weightOld : float, loadOld : float, pieceNew : string, priceNew : float, weightNew : float, loadNew : float)) {
+           price = price - input . priceOld + input . priceNew ;
+           weight = weight - input . weightOld + input . weightNew ;
+           load = load - input . loadOld + input . loadNew ;
+           pieces -= ( ( input . pieceOld ) ) ;
+           pieces += ( input . pieceNew ) ;
+         }
+
+         on deploy do {
+           goto Parked ;
+         }
+       }
+
+       hot state Parked {
+         on maintain do {
+           goto Deposit ;
+         }
+
+         on book do (u : User) {
+           send u, getBike, this ;
+           goto Moving ;
+         }
+       }
+
+       hot state Moving {
+         on light do {
+           light$Bool = ! light$Bool ;
+         }
+
+         on music do {
+           music$Bool = ! music$Bool ;
+         }
+
+         on stop do {
+           goto Halted ;
+         }
+
+         on obreak do {
+           goto Broken ;
+         }
+       }
+
+       hot state Halted {
+         on ostart do {
+           goto Moving ;
+         }
+
+         on light do {
+           light$Bool = ! light$Bool ;
+         }
+
+         on music do {
+           music$Bool = ! music$Bool ;
+         }
+
+         on gps do {
+           gps$Bool = ! gps$Bool ;
+         }
+
+         on guideApp do {
+           guideApp$Bool = ! guideApp$Bool ;
+         }
+
+         on naviApp do {
+           naviApp$Bool = ! naviApp$Bool ;
+         }
+
+         on park do {
+           goto Parked ;
+         }
+
+         on obreak do {
+           goto Broken ;
+         }
+       }
+
+       hot state Broken {
+         on assistance do {
+           goto Deposit ;
+         }
+
+         on dump do {
+           goto Trash ;
+         }
+       }
+
+       state Trash {
+         entry {
+         }
+       }
+  } .
+
+  --- Constants for function priceInit
+  op priceInit# : -> FunDecl .
+  op priceInit : -> Name .
+  op price$Map : -> MapVarId .
+  eq priceInit# = fun priceInit() : map[string,float] {
+    var price$Map : map[string,float] ;
+    price$Map["AllYear"] = 100.0 ;
+    price$Map["Summer"] = 70.0 ;
+    price$Map["Winter"] = 80.0 ;
+    price$Map["Light"] = 15.0 ;
+    price$Map["Dynamo"] = 40.0 ;
+    price$Map["Battery"] = 150.0 ;
+    price$Map["Engine"] = 300.0 ;
+    price$Map["MapsApp"] = 10.0 ;
+    price$Map["NaviApp"] = 20.0 ;
+    price$Map["GuideApp"] = 10.0 ;
+    price$Map["Music"] = 10.0 ;
+    price$Map["GPS"] = 20.0 ;
+    price$Map["Basket"] = 8.0 ;
+    price$Map["Diamond"] = 100.0 ;
+    price$Map["StepThru"] = 90.0 ;
+    return price$Map ;
+  } .
+
+  --- Constants for function weightInit
+  op weightInit# : -> FunDecl .
+  op weightInit : -> Name .
+  op weight$Map : -> MapVarId .
+  eq weightInit# = fun weightInit() : map[string,float] {
+    var weight$Map : map[string,float] ;
+    weight$Map["AllYear"] = 0.3 ;
+    weight$Map["Summer"] = 0.2 ;
+    weight$Map["Winter"] = 0.4 ;
+    weight$Map["Light"] = 0.1 ;
+    weight$Map["Dynamo"] = 0.1 ;
+    weight$Map["Battery"] = 3.0 ;
+    weight$Map["Engine"] = 10.0 ;
+    weight$Map["MapsApp"] = 0.0 ;
+    weight$Map["NaviApp"] = 0.0 ;
+    weight$Map["GuideApp"] = 0.0 ;
+    weight$Map["Music"] = 0.0 ;
+    weight$Map["GPS"] = 0.0 ;
+    weight$Map["Basket"] = 0.5 ;
+    weight$Map["Diamond"] = 5.0 ;
+    weight$Map["StepThru"] = 3.5 ;
+    return weight$Map ;
+  } .
+
+  --- Constants for function loadInit
+  op loadInit# : -> FunDecl .
+  op loadInit : -> Name .
+  op load$Map : -> MapVarId .
+  eq loadInit# = fun loadInit() : map[string,float] {
+    var load$Map : map[string,float] ;
+    load$Map["AllYear"] = 0.0 ;
+    load$Map["Summer"] = 0.0 ;
+    load$Map["Winter"] = 0.0 ;
+    load$Map["Light"] = 0.0 ;
+    load$Map["Dynamo"] = 0.0 ;
+    load$Map["Battery"] = 0.0 ;
+    load$Map["Engine"] = 0.0 ;
+    load$Map["MapsApp"] = 25.0 ;
+    load$Map["NaviApp"] = 55.0 ;
+    load$Map["GuideApp"] = 30.0 ;
+    load$Map["Music"] = 5.0 ;
+    load$Map["GPS"] = 10.0 ;
+    load$Map["Basket"] = 0.0 ;
+    load$Map["Diamond"] = 0.0 ;
+    load$Map["StepThru"] = 0.0 ;
+    return load$Map ;
+  } .
+
+  --- Constants for function installRatesInit
+  op installRatesInit# : -> FunDecl .
+  op installRatesInit : -> Name .
+  op installRates : -> MapVarId .
+  op st : -> StringVarId .
+  eq installRatesInit# = fun installRatesInit(st : string) : map[string,int] {
+    var installRates : map[string,int] ;
+    installRates["GPS"] = 6 ;
+    installRates["MapsApp"] = 10 ;
+    installRates["NaviApp"] = 6 ;
+    installRates["GuideApp"] = 3 ;
+    installRates["Music"] = 20 ;
+    installRates["Engine"] = 4 ;
+    installRates["Battery"] = 4 ;
+    installRates["Dynamo"] = 10 ;
+    installRates["Light"] = 10 ;
+    installRates["Basket"] = 8 ;
+    return installRates ;
+  } .
+
+  --- Constants for function uninstallRatesInit
+  op uninstallRatesInit# : -> FunDecl .
+  op uninstallRatesInit : -> Name .
+  op uninstallRates : -> MapVarId .
+  eq uninstallRatesInit# = fun uninstallRatesInit(st : string) : map[string,int] {
+    var uninstallRates : map[string,int] ;
+    uninstallRates["GPS"] = 6 ;
+    uninstallRates["MapsApp"] = 10 ;
+    uninstallRates["NaviApp"] = 6 ;
+    uninstallRates["GuideApp"] = 3 ;
+    uninstallRates["Music"] = 20 ;
+    uninstallRates["Engine"] = 1 ;
+    uninstallRates["Battery"] = 2 ;
+    uninstallRates["Dynamo"] = 3 ;
+    uninstallRates["Light"] = 10 ;
+    uninstallRates["Basket"] = 8 ;
+    return uninstallRates ;
+  } .
+
+  --- Constants for function replaceRatesInit
+  op replaceRatesInit# : -> FunDecl .
+  op replaceRatesInit : -> Name .
+  op replaceRates : -> MapVarId .
+  op m : -> MapVarId .
+  eq replaceRatesInit# = fun replaceRatesInit(st : string) : map[string,map[string,int]] {
+    var replaceRates : map[string,map[string,int]] ;
+    var m : map[string,int] ;
+    m["Summer"] = 5 ;
+    m["Winter"] = 5 ;
+    replaceRates["AllYear"] = m ;
+    m = default ( map[string,int] ) ;
+    m["AllYear"] = 10 ;
+    m["Winter"] = 5 ;
+    replaceRates["Summer"] = m ;
+    m = default ( map[string,int] ) ;
+    m["Summer"] = 5 ;
+    m["AllYear"] = 10 ;
+    replaceRates["Winter"] = m ;
+    if (st == "Factory") {
+      m = default ( map[string,int] ) ;
+      m["StepThru"] = 3 ;
+      replaceRates["Diamond"] = m ;
+      m = default ( map[string,int] ) ;
+      m["Diamond"] = 3 ;
+      replaceRates["StepThru"] = m ;
+    }
+    else{
+      m = default ( map[string,int] ) ;
+      m["Dynamo"] = 3 ;
+      replaceRates["Battery"] = m ;
+    }
+    return replaceRates ;
+  } .
+
+  --- Constants for machine DepositManager
+  op DepositManager# : -> MachineDecl .
+  op DepositManager : -> UserDefinedTypeName .
+  op DepositManager : -> Name .
+  op maxPrice : -> FloatVarId .
+  op maxWeight : -> FloatVarId .
+  op maxLoad : -> FloatVarId .
+  op bikePrice : -> MapVarId .
+  op bikeLoad : -> MapVarId .
+  op bikeWeight : -> MapVarId .
+  op parking : -> MachVarId .
+  op Active : -> Name .
+  op Handle# : -> FunDecl .
+  op Handle : -> Name .
+  op Out# : -> FunDecl .
+  op Out : -> Name .
+  op ValidInstall# : -> FunDecl .
+  op ValidInstall : -> Name .
+  op ValidReplace# : -> FunDecl .
+  op ValidReplace : -> Name .
+  op ValidUninstall# : -> FunDecl .
+  op ValidUninstall : -> Name .
+  op p : -> MachVarId .
+  op mPrice : -> FloatVarId .
+  op mWeight : -> FloatVarId .
+  op mLoad : -> FloatVarId .
+  op chosen : -> IntVarId .
+  op current : -> IntVarId .
+  op replacement : -> StringVarId .
+  op outv : -> IntVarId .
+  op done : -> BoolVarId .
+  op actionDone : -> BoolVarId .
+  op b : -> MachVarId .
+
+  eq DepositManager# = machine DepositManager {
+       var price$Map : map[string,float] ;
+       var weight$Map : map[string,float] ;
+       var load$Map : map[string,float] ;
+       var maxPrice : float ;
+       var maxWeight : float ;
+       var maxLoad : float ;
+       var installRates : map[string,int] ;
+       var uninstallRates : map[string,int] ;
+       var replaceRates : map[string,map[string,int]] ;
+       var bikePrice : map[Bike,float] ;
+       var bikeLoad : map[Bike,float] ;
+       var bikeWeight : map[Bike,float] ;
+       var parking : Parking ;
+
+       start state Active {
+         entry (input : (p : Parking, mPrice : float, mWeight : float, mLoad : float)) {
+           maxPrice = input . mPrice ;
+           maxWeight = input . mWeight ;
+           maxLoad = input . mLoad ;
+           price$Map = priceInit() ;
+           weight$Map = weightInit() ;
+           load$Map = loadInit() ;
+           parking = input . p ;
+           installRates = installRatesInit("Deposit") ;
+           uninstallRates = uninstallRatesInit("Deposit") ;
+           replaceRates = replaceRatesInit("Deposit") ;
+         }
+
+         on newBike do (input : (bike : Bike, price : float, weight : float, load : float)) {
+           bikePrice[input . bike] = input . price ;
+           bikeWeight[input . bike] = input . weight ;
+           bikeLoad[input . bike] = input . load ;
+           send this, received, input . bike ;
+         }
+
+         on received do (bike : Bike) {
+           Handle(bike) ;
+           send bike, deploy, bike ;
+           send parking, deploy, bike ;
+         }
+
+         on obreak do (bike : Bike) {
+           var chosen : int ;
+           var current : int ;
+           current = 10 ;
+           chosen = choose ( 11 ) ;
+           if (chosen < current) {
+             send bike, assistance ;
+             Handle(bike) ;
+             send bike, deploy, bike ;
+             send parking, deploy, bike ;
+           }
+           else{
+             send bike, dump ;
+             bikePrice -= ( bike ) ;
+             bikeWeight -= ( bike ) ;
+             bikeLoad -= ( bike ) ;
+           }
+         }
+       }
+       fun Handle (bike : Bike) {
+         var piece : string ;
+         var replacement : string ;
+         var outv : int ;
+         var current : int ;
+         var chosen : int ;
+         var done : bool ;
+         var actionDone : bool ;
+         done = false ;
+         outv = Out(bike) ;
+         while (! done) {
+           current = 8 ;
+           chosen = choose ( outv ) ;
+           if (chosen < current) {
+             done = true ;
+           }
+           else{
+             actionDone = false ;
+             foreach (piece in keys ( installRates )) {
+               if (! actionDone && ValidInstall(bike, piece)) {
+                 current = current + installRates[piece] ;
+                 if (chosen <= current) {
+                   actionDone = true ;
+                   send bike, install, (piece = piece, price = price$Map[piece], weight = weight$Map[piece], load = load$Map[piece]) ;
+                 }
+               }
+             }
+             if (! actionDone) {
+               foreach (piece in keys ( uninstallRates )) {
+                 if (! actionDone && ValidUninstall(bike, piece)) {
+                   current = current + uninstallRates[piece] ;
+                   if (chosen <= current) {
+                     actionDone = true ;
+                     send bike, uninstall, (piece = piece, price = price$Map[piece], weight = weight$Map[piece], load = load$Map[piece]) ;
+                   }
+                 }
+               }
+             }
+             if (! actionDone) {
+               foreach (piece in keys ( replaceRates )) {
+                 foreach (replacement in keys ( replaceRates[piece] )) {
+                   if (! actionDone && ValidReplace(bike, piece, replacement)) {
+                     current = current + replaceRates[piece][replacement] ;
+                     if (chosen <= current) {
+                       actionDone = true ;
+                       send bike, replace, (pieceOld = piece, priceOld = price$Map[piece], weightOld = weight$Map[piece], loadOld = load$Map[piece], pieceNew = replacement, priceNew = price$Map[replacement], weightNew = weight$Map[piece], loadNew = load$Map[piece]) ;
+                     }
+                   }
+                 }
+               }
+             }
+           }
+           outv = Out(bike) ;
+         }
+       }
+
+       fun Out (b : Bike) : int {
+         var piece : string ;
+         var replacement : string ;
+         var outv : int ;
+         outv = 8 ;
+         foreach (piece in keys ( installRates )) {
+           if (ValidInstall(b, piece)) {
+             outv = outv + installRates[piece] ;
+           }
+         }
+         foreach (piece in keys ( uninstallRates )) {
+           if (ValidUninstall(b, piece)) {
+             outv = outv + uninstallRates[piece] ;
+           }
+         }
+         foreach (piece in keys ( replaceRates )) {
+           foreach (replacement in keys ( replaceRates[piece] )) {
+             if (ValidReplace(b, piece, replacement)) {
+               outv = outv + replaceRates[piece][replacement] ;
+             }
+           }
+         }
+         return outv ;
+       }
+
+       fun ValidInstall (b : Bike, piece : string) : bool {
+         return bikePrice[b] + price$Map[piece] <= maxPrice && bikeWeight[b] + weight$Map[piece] <= maxWeight && bikeLoad[b] + load$Map[piece] <= maxLoad ;
+       }
+
+       fun ValidReplace (b : Bike, piece : string, replacement : string) : bool {
+         return bikePrice[b] - price$Map[piece] + price$Map[replacement] <= maxPrice && bikeWeight[b] - weight$Map[piece] + weight$Map[replacement] <= maxWeight && bikeLoad[b] - load$Map[piece] + load$Map[replacement] <= maxLoad ;
+       }
+
+       fun ValidUninstall (b : Bike, piece : string) : bool {
+         return true ;
+       }
+
+  } .
+
+  --- Constants for machine FactoryManager
+  op FactoryManager# : -> MachineDecl .
+  op FactoryManager : -> UserDefinedTypeName .
+  op FactoryManager : -> Name .
+  op deposit : -> MachVarId .
+  op iPrice : -> FloatVarId .
+  op iWeight : -> FloatVarId .
+  op iLoad : -> FloatVarId .
+  op d : -> MachVarId .
+  op numBikes : -> IntVarId .
+
+  eq FactoryManager# = machine FactoryManager {
+       var price$Map : map[string,float] ;
+       var weight$Map : map[string,float] ;
+       var load$Map : map[string,float] ;
+       var initialPrice : float ;
+       var initialWeight : float ;
+       var initialLoad : float ;
+       var maxPrice : float ;
+       var maxWeight : float ;
+       var maxLoad : float ;
+       var installRates : map[string,int] ;
+       var replaceRates : map[string,map[string,int]] ;
+       var bikePrice : map[Bike,float] ;
+       var bikeLoad : map[Bike,float] ;
+       var bikeWeight : map[Bike,float] ;
+       var deposit : DepositManager ;
+
+       start state Active {
+         entry (input : (iPrice : float, iWeight : float, iLoad : float, mPrice : float, mWeight : float, mLoad : float, d : DepositManager)) {
+           initialPrice = input . iPrice ;
+           initialWeight = input . iWeight ;
+           initialLoad = input . iLoad ;
+           maxPrice = input . mPrice ;
+           maxWeight = input . mWeight ;
+           maxLoad = input . mLoad ;
+           price$Map = priceInit() ;
+           weight$Map = weightInit() ;
+           load$Map = loadInit() ;
+           installRates = installRatesInit("Factory") ;
+           replaceRates = replaceRatesInit("Factory") ;
+           deposit = input . d ;
+         }
+
+         on create do (numBikes : int) {
+           var b : Bike ;
+           while (numBikes > 0) {
+             b = new Bike((initialPrice = initialPrice, initialWeight = initialWeight, initialLoad = initialLoad)) ;
+             bikePrice[b] = initialPrice ;
+             bikeWeight[b] = initialWeight ;
+             bikeLoad[b] = initialLoad ;
+             Handle(b) ;
+             send b, sell ;
+             send deposit, newBike, (bike = b, price = bikePrice[b], weight = bikeWeight[b], load = bikeLoad[b]) ;
+             numBikes = numBikes - 1 ;
+           }
+         }
+       }
+       fun Handle (b : Bike) {
+         var piece : string ;
+         var replacement : string ;
+         var outv : int ;
+         var current : int ;
+         var chosen : int ;
+         var done : bool ;
+         var actionDone : bool ;
+         done = false ;
+         outv = Out(b) ;
+         while (! done) {
+           current = 8 ;
+           chosen = choose ( outv ) ;
+           if (chosen < current) {
+             done = true ;
+           }
+           else{
+             actionDone = false ;
+             foreach (piece in keys ( installRates )) {
+               if (! actionDone && ValidInstall(b, piece)) {
+                 current = current + installRates[piece] ;
+                 if (chosen <= current) {
+                   actionDone = true ;
+                   bikePrice[b] = bikePrice[b] + price$Map[piece] ;
+                   bikeWeight[b] = bikeWeight[b] + weight$Map[piece] ;
+                   bikeLoad[b] = bikeLoad[b] + load$Map[piece] ;
+                   send b, install, (piece = piece, price = price$Map[piece], weight = weight$Map[piece], load = load$Map[piece]) ;
+                 }
+               }
+             }
+             if (! actionDone) {
+               foreach (piece in keys ( replaceRates )) {
+                 foreach (replacement in keys ( replaceRates[piece] )) {
+                   if (! actionDone && ValidReplace(b, piece, replacement)) {
+                     current = current + replaceRates[piece][replacement] ;
+                     if (chosen <= current) {
+                       actionDone = true ;
+                       bikePrice[b] = bikePrice[b] - price$Map[piece] + price$Map[replacement] ;
+                       bikeWeight[b] = bikeWeight[b] - weight$Map[piece] + weight$Map[replacement] ;
+                       bikeLoad[b] = bikeLoad[b] - load$Map[piece] + load$Map[replacement] ;
+                       send b, replace, (pieceOld = piece, priceOld = price$Map[piece], weightOld = weight$Map[piece], loadOld = load$Map[piece], pieceNew = replacement, priceNew = price$Map[replacement], weightNew = weight$Map[replacement], loadNew = load$Map[replacement]) ;
+                     }
+                   }
+                 }
+               }
+             }
+           }
+           outv = Out(b) ;
+         }
+       }
+
+       fun Out (b : Bike) : int {
+         var piece : string ;
+         var replacement : string ;
+         var outv : int ;
+         outv = 8 ;
+         foreach (piece in keys ( installRates )) {
+           if (ValidInstall(b, piece)) {
+             outv = outv + installRates[piece] ;
+           }
+         }
+         foreach (piece in keys ( replaceRates )) {
+           foreach (replacement in keys ( replaceRates[piece] )) {
+             if (ValidReplace(b, piece, replacement)) {
+               outv = outv + replaceRates[piece][replacement] ;
+             }
+           }
+         }
+         return outv ;
+       }
+
+       fun ValidInstall (b : Bike, piece : string) : bool {
+         return bikePrice[b] + price$Map[piece] <= maxPrice && bikeWeight[b] + weight$Map[piece] <= maxWeight && bikeLoad[b] + load$Map[piece] <= maxLoad ;
+       }
+
+       fun ValidReplace (b : Bike, piece : string, replacement : string) : bool {
+         return bikePrice[b] - price$Map[piece] + price$Map[replacement] <= maxPrice && bikeWeight[b] - weight$Map[piece] + weight$Map[replacement] <= maxWeight && bikeLoad[b] - load$Map[piece] + load$Map[replacement] <= maxLoad ;
+       }
+
+  } .
+
+  --- Constants for function Decode
+  op Decode# : -> FunDecl .
+  op Decode : -> Name .
+  op o : -> VarId .
+  eq Decode# = fun Decode(o : any) : string ; .
+
+  --- Constants for function AddMachine
+  op AddMachine# : -> FunDecl .
+  op AddMachine : -> Name .
+  op name : -> StringVarId .
+  eq AddMachine# = fun AddMachine(name : string) ; .
+
+  --- Constants for function GetInfo
+  op GetInfo# : -> FunDecl .
+  op GetInfo : -> Name .
+  eq GetInfo# = fun GetInfo() : any ; .
+
+  --- Constants for machine Parking
+  op Parking# : -> MachineDecl .
+  op Parking : -> UserDefinedTypeName .
+  op Parking : -> Name .
+  op bikes : -> SeqVarId .
+  op Initial : -> Name .
+  op ok : -> BoolVarId .
+
+  eq Parking# = machine Parking {
+       var bikes : seq[Bike] ;
+       var numBikes : int ;
+
+       start state Initial {
+         entry {
+           numBikes = 0 ;
+         }
+
+         on deploy do (b : Bike) {
+           bikes += ( numBikes, b ) ;
+           numBikes = numBikes + 1 ;
+         }
+
+         on book do (u : User) {
+           var b : Bike ;
+           var ok : bool ;
+           while (! ok) {
+             if (numBikes > 0) {
+               numBikes = numBikes - 1 ;
+               b = bikes[numBikes] ;
+               if (choose ( 11 ) > 0) {
+                 send b, book, u ;
+                 ok = true ;
+               }
+               else{
+                 send b, maintain ;
+               }
+             }
+             else{
+               send u, noBikeAvailable ;
+               ok = true ;
+             }
+           }
+         }
+
+         on park do (b : Bike) {
+           bikes += ( numBikes, b ) ;
+           numBikes = numBikes + 1 ;
+         }
+       }
+  } .
+
+  --- Constants for machine User
+  op User# : -> MachineDecl .
+  op User : -> UserDefinedTypeName .
+  op User : -> Name .
+  op WithoutBike : -> Name .
+  op WithBikeMoving : -> Name .
+  op WithBikeHalted : -> Name .
+
+  eq User# = machine User {
+       var parking : Parking ;
+       var deposit : DepositManager ;
+       var bike : Bike ;
+
+       start state Initial {
+         entry (input : (d : DepositManager, p : Parking)) {
+           parking = input . p ;
+           deposit = input . d ;
+           goto WithoutBike ;
+         }
+       }
+
+       state WithoutBike {
+         entry {
+           send parking, book, this ;
+         }
+
+         on getBike do (b : Bike) {
+           bike = b ;
+           goto WithBikeMoving ;
+         }
+
+         on noBikeAvailable do {
+           send parking, book, this ;
+         }
+       }
+
+       state WithBikeMoving {
+         entry {
+           var chosen : int ;
+           var current : int ;
+           chosen = choose ( 46 ) ;
+           current = 5 ;
+           if (chosen < current) {
+             send bike, stop ;
+             goto WithBikeHalted ;
+           }
+           current = current + 1 ;
+           if (chosen < current) {
+             send bike, obreak, bike ;
+             send deposit, obreak, bike ;
+             goto WithoutBike ;
+           }
+           current = current + 20 ;
+           if (chosen < current) {
+             send bike, music ;
+             goto WithBikeMoving ;
+           }
+           send bike, light ;
+           goto WithBikeMoving ;
+         }
+       }
+
+       state WithBikeHalted {
+         entry {
+           var chosen : int ;
+           var current : int ;
+           chosen = choose ( 67 ) ;
+           current = 5 ;
+           if (chosen < current) {
+             send bike, ostart ;
+             goto WithBikeMoving ;
+           }
+           current = current + 1 ;
+           if (chosen < current) {
+             send bike, park, bike ;
+             send parking, park, bike ;
+             goto WithoutBike ;
+           }
+           current = current + 1 ;
+           if (chosen < current) {
+             send bike, obreak, bike ;
+             send deposit, obreak, bike ;
+             goto WithoutBike ;
+           }
+           current = current + 20 ;
+           if (chosen < current) {
+             send bike, music ;
+             goto WithBikeHalted ;
+           }
+           current = current + 10 ;
+           if (chosen < current) {
+             send bike, gps ;
+             goto WithBikeHalted ;
+           }
+           current = current + 10 ;
+           if (chosen < current) {
+             send bike, guideApp ;
+             goto WithBikeHalted ;
+           }
+           current = current + 10 ;
+           if (chosen < current) {
+             send bike, naviApp ;
+             goto WithBikeHalted ;
+           }
+           send bike, light ;
+           goto WithBikeHalted ;
+         }
+       }
+  } .
+
+  --- Constants for test t10U100B
+  op t10U100B# : -> TestDecl .
+  op t10U100B : -> Name .
+  eq t10U100B# = test t10U100B [main = Test10U100B] :
+    union { Bike }, { FactoryManager }, { DepositManager }, { Parking }, { User }, { Test10U100B } ; .
+
+  --- Constants for test t100U1000B
+  op t100U1000B# : -> TestDecl .
+  op t100U1000B : -> Name .
+  eq t100U1000B# = test t100U1000B [main = Test100U1000B] :
+    union { Bike }, { FactoryManager }, { DepositManager }, { Parking }, { User }, { Test100U1000B } ; .
+
+  --- Constants for machine Test10U100B
+  op Test10U100B# : -> MachineDecl .
+  op Test10U100B : -> UserDefinedTypeName .
+  op Test10U100B : -> Name .
+  op factory : -> MachVarId .
+  op user : -> SeqVarId .
+  op n : -> IntVarId .
+
+  eq Test10U100B# = machine Test10U100B {
+
+       start state Init {
+         entry {
+           var deposit : DepositManager ;
+           var factory : FactoryManager ;
+           var user : seq[User] ;
+           var parking : Parking ;
+           var n : int ;
+           parking = new Parking ( ) ;
+           deposit = new DepositManager((p = parking, mPrice = 350.0, mWeight = 11.0, mLoad = 75.0)) ;
+           factory = new FactoryManager((iPrice = 1000.0, iWeight = 10.0, iLoad = 0.0, mPrice = 1350.0, mWeight = 21.0, mLoad = 75.0, d = deposit)) ;
+           n = 0 ;
+           while (n < 10) {
+             user += ( n, new User((d = deposit, p = parking)) ) ;
+             n = n + 1 ;
+           }
+           send factory, create, 100 ;
+         }
+       }
+  } .
+
+  --- Constants for machine Test100U1000B
+  op Test100U1000B# : -> MachineDecl .
+  op Test100U1000B : -> UserDefinedTypeName .
+  op Test100U1000B : -> Name .
+
+  eq Test100U1000B# = machine Test100U1000B {
+
+       start state Init {
+         entry {
+           var deposit : DepositManager ;
+           var factory : FactoryManager ;
+           var user : seq[User] ;
+           var parking : Parking ;
+           var n : int ;
+           parking = new Parking ( ) ;
+           deposit = new DepositManager((p = parking, mPrice = 350.0, mWeight = 11.0, mLoad = 75.0)) ;
+           factory = new FactoryManager((iPrice = 1000.0, iWeight = 10.0, iLoad = 0.0, mPrice = 1350.0, mWeight = 21.0, mLoad = 75.0, d = deposit)) ;
+           n = 0 ;
+           while (n < 100) {
+             user += ( n, new User((d = deposit, p = parking)) ) ;
+             n = n + 1 ;
+           }
+           send factory, create, 1000 ;
+         }
+       }
+  } .
+endm
+
+mod BIKES-RUN is
+  inc BIKES .
+
+  op init : -> System .
+  eq init = init([Bike#]
+                 [DepositManager#]
+                 [FactoryManager#]
+                 [Parking#]
+                 [User#]
+                 [Test10U100B#]
+                 [Test100U1000B#]
+                 [priceInit#]
+                 [weightInit#]
+                 [loadInit#]
+                 [installRatesInit#]
+                 [uninstallRatesInit#]
+                 [replaceRatesInit#]
+                 [Decode#]
+                 [AddMachine#]
+                 [GetInfo#]
+                 [t10U100B#]
+                 [t100U1000B#]) .
+endm

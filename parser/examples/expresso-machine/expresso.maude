@@ -1,0 +1,561 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module EXPRESSO
+---- 
+---- Located at examples/expresso-machine/
+---- Date 2024-07-24 14:41:58.698441
+---- 
+--------------------------------------------------------------------
+
+load /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude
+
+mod EXPRESSO is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tCoffeeMakerState .
+  subsort tCoffeeMakerState < UserDefinedType .
+  op tCoffeeMakerState : -> UserDefinedTypeName .
+  ops NotWarmedUp Ready NoBeansError NoWaterError : -> tCoffeeMakerState .
+  sort tCoffeeMakerOperations .
+  subsort tCoffeeMakerOperations < UserDefinedType .
+  op tCoffeeMakerOperations : -> UserDefinedTypeName .
+  ops CM-PressEspressoButton CM-PressSteamerButton CM-PressResetButton CM-ClearGrounds : -> tCoffeeMakerOperations .
+
+  --- Constants for event declarations
+  op eEspressoButtonPressed : -> EventName .
+  op eSteamerButtonOff : -> EventName .
+  op eSteamerButtonOn : -> EventName .
+  op eOpenGroundsDoor : -> EventName .
+  op eCloseGroundsDoor : -> EventName .
+  op eResetCoffeeMaker : -> EventName .
+  op eCoffeeMakerError : -> EventName .
+  op eCoffeeMakerReady : -> EventName .
+  op eCoffeeMachineUser : -> EventName .
+  op eWarmUpReq : -> EventName .
+  op eGrindBeansReq : -> EventName .
+  op eStartEspressoReq : -> EventName .
+  op eStartSteamerReq : -> EventName .
+  op eStopSteamerReq : -> EventName .
+  op eGrindBeansCompleted : -> EventName .
+  op eEspressoCompleted : -> EventName .
+  op eWarmUpCompleted : -> EventName .
+  op eNoWaterError : -> EventName .
+  op eNoBeansError : -> EventName .
+  op eWarmerError : -> EventName .
+  op eInWarmUpState : -> EventName .
+  op eInReadyState : -> EventName .
+  op eInBeansGrindingState : -> EventName .
+  op eInCoffeeBrewingState : -> EventName .
+  op eErrorHappened : -> EventName .
+  op eResetPerformed : -> EventName .
+
+  --- Constants for machine CoffeeMakerControlPanel
+  op CoffeeMakerControlPanel# : -> MachineDecl .
+  op CoffeeMakerControlPanel : -> UserDefinedTypeName .
+  op CoffeeMakerControlPanel : -> Name .
+  op coffeeMaker : -> MachVarId .
+  op cofferMakerState : -> VarId .
+  op currentUser : -> MachVarId .
+  op Init : -> Name .
+  op WaitForUser# : -> FunDecl .
+  op WaitForUser : -> Name .
+  op WarmUpCoffeeMaker : -> Name .
+  op CoffeeMakerReady : -> Name .
+  op CoffeeMakerRunGrind : -> Name .
+  op CoffeeMakerRunEspresso : -> Name .
+  op CoffeeMakerRunSteam : -> Name .
+  op CoffeeMakerDoorOpened : -> Name .
+  op EncounteredError : -> Name .
+  op BeginHeatingCoffeeMaker# : -> FunDecl .
+  op BeginHeatingCoffeeMaker : -> Name .
+  op StartSteamer# : -> FunDecl .
+  op StartSteamer : -> Name .
+  op StopSteamer# : -> FunDecl .
+  op StopSteamer : -> Name .
+  op GrindBeans# : -> FunDecl .
+  op GrindBeans : -> Name .
+  op StartEspresso# : -> FunDecl .
+  op StartEspresso : -> Name .
+  op user : -> MachVarId .
+
+  eq CoffeeMakerControlPanel# = machine CoffeeMakerControlPanel {
+       var coffeeMaker : EspressoCoffeeMaker ;
+       var cofferMakerState : tCoffeeMakerState ;
+       var currentUser : machine ;
+
+       start state Init {
+         entry {
+           cofferMakerState = NotWarmedUp ;
+           coffeeMaker = new EspressoCoffeeMaker(this) ;
+           WaitForUser() ;
+           goto WarmUpCoffeeMaker ;
+         }
+       }
+       fun WaitForUser () {
+         receive {
+           case eCoffeeMachineUser : (user : machine) {
+               currentUser = user ;
+           }
+         }
+       }
+
+
+       state WarmUpCoffeeMaker {
+         entry {
+           announce eInWarmUpState ;
+           BeginHeatingCoffeeMaker() ;
+         }
+
+         on eWarmUpCompleted goto CoffeeMakerReady ;
+
+         defer eOpenGroundsDoor, eCloseGroundsDoor ;
+
+         ignore eEspressoButtonPressed, eSteamerButtonOff, eSteamerButtonOn, eResetCoffeeMaker ;
+
+         ignore eNoBeansError, eNoWaterError, eGrindBeansCompleted ;
+       }
+
+       state CoffeeMakerReady {
+         entry {
+           announce eInReadyState ;
+           cofferMakerState = Ready ;
+           send currentUser, eCoffeeMakerReady ;
+         }
+
+         on eOpenGroundsDoor goto CoffeeMakerDoorOpened ;
+
+         on eEspressoButtonPressed goto CoffeeMakerRunGrind ;
+
+         on eSteamerButtonOn goto CoffeeMakerRunSteam ;
+
+         ignore eSteamerButtonOff, eCloseGroundsDoor ;
+
+         ignore eWarmUpCompleted, eResetCoffeeMaker, eNoBeansError, eNoWaterError ;
+       }
+
+       state CoffeeMakerRunGrind {
+         entry {
+           announce eInBeansGrindingState ;
+           GrindBeans() ;
+         }
+
+         on eNoBeansError goto EncounteredError with {
+           cofferMakerState = NoBeansError ;
+           print "No beans to grind! Please refill beans and reset the machine!" ;
+        }
+
+         on eNoWaterError goto EncounteredError with {
+           cofferMakerState = NoWaterError ;
+           print "No Water! Please refill water and reset the machine!" ;
+        }
+
+         on eGrindBeansCompleted goto CoffeeMakerRunEspresso ;
+
+         defer eOpenGroundsDoor, eCloseGroundsDoor, eEspressoButtonPressed ;
+
+         ignore eSteamerButtonOn, eSteamerButtonOff ;
+
+         ignore eWarmUpCompleted, eResetCoffeeMaker ;
+       }
+
+       state CoffeeMakerRunEspresso {
+         entry {
+           announce eInCoffeeBrewingState ;
+           StartEspresso() ;
+         }
+
+         on eEspressoCompleted goto CoffeeMakerReady with {
+           send currentUser, eEspressoCompleted ;
+        }
+
+         on eNoWaterError goto EncounteredError with {
+           cofferMakerState = NoWaterError ;
+           print "No Water! Please refill water and reset the machine!" ;
+        }
+
+         defer eOpenGroundsDoor, eCloseGroundsDoor, eEspressoButtonPressed ;
+
+         ignore eSteamerButtonOn, eSteamerButtonOff ;
+
+         ignore eWarmUpCompleted, eResetCoffeeMaker ;
+       }
+
+       state CoffeeMakerRunSteam {
+         entry {
+           StartSteamer() ;
+         }
+
+         on eSteamerButtonOff goto CoffeeMakerReady with {
+           StopSteamer() ;
+        }
+
+         on eNoWaterError goto EncounteredError with {
+           cofferMakerState = NoWaterError ;
+           print "No Water! Please refill water and reset the machine!" ;
+        }
+
+         defer eOpenGroundsDoor, eCloseGroundsDoor ;
+
+         ignore eEspressoButtonPressed, eSteamerButtonOn ;
+       }
+
+       state CoffeeMakerDoorOpened {
+         on eCloseGroundsDoor do {
+           assert cofferMakerState =/= NotWarmedUp, "" ;
+           assert cofferMakerState == Ready, "" ;
+           goto CoffeeMakerReady ;
+         }
+
+         ignore eEspressoButtonPressed, eSteamerButtonOn, eSteamerButtonOff ;
+       }
+
+       state EncounteredError {
+         entry {
+           announce eErrorHappened ;
+           send currentUser, eCoffeeMakerError, cofferMakerState ;
+         }
+
+         on eResetCoffeeMaker goto WarmUpCoffeeMaker with {
+           announce eResetPerformed ;
+        }
+
+         ignore eEspressoButtonPressed, eSteamerButtonOn, eSteamerButtonOff, eOpenGroundsDoor, eCloseGroundsDoor, eWarmUpCompleted, eEspressoCompleted, eGrindBeansCompleted ;
+
+         ignore eNoBeansError, eNoWaterError ;
+       }
+       fun BeginHeatingCoffeeMaker () {
+         send coffeeMaker, eWarmUpReq ;
+       }
+
+       fun StartSteamer () {
+         send coffeeMaker, eStartSteamerReq ;
+       }
+
+       fun StopSteamer () {
+         send coffeeMaker, eStopSteamerReq ;
+       }
+
+       fun GrindBeans () {
+         send coffeeMaker, eGrindBeansReq ;
+       }
+
+       fun StartEspresso () {
+         send coffeeMaker, eStartEspressoReq ;
+       }
+
+  } .
+
+  --- Constants for machine EspressoCoffeeMaker
+  op EspressoCoffeeMaker# : -> MachineDecl .
+  op EspressoCoffeeMaker : -> UserDefinedTypeName .
+  op EspressoCoffeeMaker : -> Name .
+  op controller : -> MachVarId .
+  op WaitForRequests : -> Name .
+  op HasBeans# : -> FunDecl .
+  op HasBeans : -> Name .
+  op HasWater# : -> FunDecl .
+  op HasWater : -> Name .
+  op #controller : -> MachVarId .
+
+  eq EspressoCoffeeMaker# = machine EspressoCoffeeMaker {
+       var controller : CoffeeMakerControlPanel ;
+
+       start state WaitForRequests {
+         entry (#controller : CoffeeMakerControlPanel) {
+           controller = #controller ;
+         }
+
+         on eWarmUpReq do {
+           send controller, eWarmUpCompleted ;
+         }
+
+         on eGrindBeansReq do {
+           if (! HasBeans()) {
+             send controller, eNoBeansError ;
+           }
+           else{
+             send controller, eGrindBeansCompleted ;
+           }
+         }
+
+         on eStartEspressoReq do {
+           if (! HasWater()) {
+             send controller, eNoWaterError ;
+           }
+           else{
+             send controller, eEspressoCompleted ;
+           }
+         }
+
+         on eStartSteamerReq do {
+           if (! HasWater()) {
+             send controller, eNoWaterError ;
+           }
+         }
+
+         on eStopSteamerReq do {
+         }
+       }
+       fun HasBeans () : bool {
+         return $ ;
+       }
+
+       fun HasWater () : bool {
+         return $ ;
+       }
+
+  } .
+
+  --- Constants for module EspressoMachine
+  op EspressoMachine : -> Name .
+  --- module EspressoMachine = { CoffeeMakerControlPanel, EspressoCoffeeMaker } ; .
+
+  --- Constants for monitor EspressoMachineModesOfOperation
+  op EspressoMachineModesOfOperation# : -> SpecDecl .
+  op EspressoMachineModesOfOperation : -> UserDefinedTypeName .
+  op EspressoMachineModesOfOperation : -> Name .
+  op StartUp : -> Name .
+  op WarmUp : -> Name .
+  op Ready$State : -> Name .
+  op BeanGrinding : -> Name .
+  op MakingCoffee : -> Name .
+  op Error : -> Name .
+
+  eq EspressoMachineModesOfOperation# = spec EspressoMachineModesOfOperation observes eInWarmUpState, eInReadyState, eInBeansGrindingState, eInCoffeeBrewingState, eErrorHappened, eResetPerformed {
+
+       start state StartUp {
+         on eInWarmUpState goto WarmUp ;
+       }
+
+       state WarmUp {
+         on eErrorHappened goto Error ;
+
+         on eInReadyState goto Ready$State ;
+       }
+
+       state Ready$State {
+         ignore eInReadyState ;
+
+         on eInBeansGrindingState goto BeanGrinding ;
+
+         on eErrorHappened goto Error ;
+       }
+
+       state BeanGrinding {
+         on eInCoffeeBrewingState goto MakingCoffee ;
+
+         on eErrorHappened goto Error ;
+       }
+
+       state MakingCoffee {
+         on eInReadyState goto Ready$State ;
+
+         on eErrorHappened goto Error ;
+       }
+
+       state Error {
+         on eResetPerformed goto StartUp ;
+
+         ignore eErrorHappened ;
+       }
+  } .
+
+  --- Constants for machine TestWithSaneUser
+  op TestWithSaneUser# : -> MachineDecl .
+  op TestWithSaneUser : -> UserDefinedTypeName .
+  op TestWithSaneUser : -> Name .
+
+  eq TestWithSaneUser# = machine TestWithSaneUser {
+
+       start state Init {
+         entry {
+           new SaneUser(new CoffeeMakerControlPanel ( )) ;
+         }
+       }
+  } .
+
+  --- Constants for machine TestWithCrazyUser
+  op TestWithCrazyUser# : -> MachineDecl .
+  op TestWithCrazyUser : -> UserDefinedTypeName .
+  op TestWithCrazyUser : -> Name .
+
+  eq TestWithCrazyUser# = machine TestWithCrazyUser {
+
+       start state Init {
+         entry {
+           new CrazyUser((coffeeMaker = new CoffeeMakerControlPanel ( ), nOps = 5)) ;
+         }
+       }
+  } .
+
+  --- Constants for test tcSaneUserUsingCoffeeMachine
+  op tcSaneUserUsingCoffeeMachine# : -> TestDecl .
+  op tcSaneUserUsingCoffeeMachine : -> Name .
+  eq tcSaneUserUsingCoffeeMachine# = test tcSaneUserUsingCoffeeMachine [main = TestWithSaneUser] :
+    assert EspressoMachineModesOfOperation in ( union { TestWithSaneUser }, EspressoMachine, Users ) ; .
+
+  --- Constants for test tcCrazyUserUsingCoffeeMachine
+  op tcCrazyUserUsingCoffeeMachine# : -> TestDecl .
+  op tcCrazyUserUsingCoffeeMachine : -> Name .
+  eq tcCrazyUserUsingCoffeeMachine# = test tcCrazyUserUsingCoffeeMachine [main = TestWithCrazyUser] :
+    assert EspressoMachineModesOfOperation in ( union { TestWithCrazyUser }, EspressoMachine, Users ) ; .
+
+  --- Constants for machine SaneUser
+  op SaneUser# : -> MachineDecl .
+  op SaneUser : -> UserDefinedTypeName .
+  op SaneUser : -> Name .
+  op coffeeMakerPanel : -> MachVarId .
+  op cups : -> IntVarId .
+  op LetsMakeCoffee : -> Name .
+  op status : -> VarId .
+
+  eq SaneUser# = machine SaneUser {
+       var coffeeMakerPanel : CoffeeMakerControlPanel ;
+       var cups : int ;
+
+       start state Init {
+         entry (coffeeMaker : CoffeeMakerControlPanel) {
+           coffeeMakerPanel = coffeeMaker ;
+           send coffeeMakerPanel, eCoffeeMachineUser, this ;
+           cups = 2 ;
+           goto LetsMakeCoffee ;
+         }
+       }
+
+       state LetsMakeCoffee {
+         entry {
+           while (cups > 0) {
+             WaitForCoffeeMakerToBeReady() ;
+             PerformOperationOnCoffeeMaker(coffeeMakerPanel, CM-PressEspressoButton) ;
+             receive {
+               case eEspressoCompleted : {
+               cups = cups - 1 ;
+               }
+               case eCoffeeMakerError : (status : tCoffeeMakerState) {
+               PerformOperationOnCoffeeMaker(coffeeMakerPanel, CM-PressResetButton) ;
+               }
+             }
+           }
+           PerformOperationOnCoffeeMaker(coffeeMakerPanel, CM-ClearGrounds) ;
+           raise halt ;
+         }
+       }
+  } .
+
+  --- Constants for machine CrazyUser
+  op CrazyUser# : -> MachineDecl .
+  op CrazyUser : -> UserDefinedTypeName .
+  op CrazyUser : -> Name .
+  op numOperations : -> IntVarId .
+  op StartPressingButtons : -> Name .
+  op PickRandomOperationToPerform# : -> FunDecl .
+  op PickRandomOperationToPerform : -> Name .
+  op config : -> VarId .
+  op nOps : -> IntVarId .
+  op pickedOps : -> VarId .
+  op op-i : -> IntVarId .
+
+  eq CrazyUser# = machine CrazyUser {
+       var coffeeMakerPanel : CoffeeMakerControlPanel ;
+       var numOperations : int ;
+
+       start state StartPressingButtons {
+         entry (config : (coffeeMaker : CoffeeMakerControlPanel, nOps : int)) {
+           var pickedOps : tCoffeeMakerOperations ;
+           numOperations = config . nOps ;
+           coffeeMakerPanel = config . coffeeMaker ;
+           send coffeeMakerPanel, eCoffeeMachineUser, this ;
+           while (numOperations > 0) {
+             pickedOps = PickRandomOperationToPerform() ;
+             PerformOperationOnCoffeeMaker(coffeeMakerPanel, pickedOps) ;
+             numOperations = numOperations - 1 ;
+           }
+         }
+
+         ignore eCoffeeMakerError, eEspressoCompleted, eCoffeeMakerReady ;
+       }
+       fun PickRandomOperationToPerform () : tCoffeeMakerOperations {
+         var op-i : int ;
+         op-i = choose ( 3 ) ;
+         if (op-i == 0) {
+           return CM-PressEspressoButton ;
+         }
+         else{
+           if (op-i == 1) {
+             return CM-PressSteamerButton ;
+           }
+           else{
+             if (op-i == 2) {
+               return CM-PressResetButton ;
+             }
+             else{
+               return CM-ClearGrounds ;
+             }
+           }
+         }
+       }
+
+  } .
+
+  --- Constants for function PerformOperationOnCoffeeMaker
+  op PerformOperationOnCoffeeMaker# : -> FunDecl .
+  op PerformOperationOnCoffeeMaker : -> Name .
+  op coffeeMakerCP : -> MachVarId .
+  op CM-Ops : -> VarId .
+  eq PerformOperationOnCoffeeMaker# = fun PerformOperationOnCoffeeMaker(coffeeMakerCP : CoffeeMakerControlPanel, CM-Ops : tCoffeeMakerOperations) {
+    if (CM-Ops == CM-PressEspressoButton) {
+      send coffeeMakerCP, eEspressoButtonPressed ;
+    }
+    else{
+      if (CM-Ops == CM-PressSteamerButton) {
+        send coffeeMakerCP, eSteamerButtonOn ;
+        send coffeeMakerCP, eSteamerButtonOff ;
+      }
+      else{
+        if (CM-Ops == CM-ClearGrounds) {
+          send coffeeMakerCP, eOpenGroundsDoor ;
+          send coffeeMakerCP, eCloseGroundsDoor ;
+        }
+        else{
+          if (CM-Ops == CM-PressResetButton) {
+            send coffeeMakerCP, eResetCoffeeMaker ;
+          }
+        }
+      }
+    }
+  } .
+
+  --- Constants for function WaitForCoffeeMakerToBeReady
+  op WaitForCoffeeMakerToBeReady# : -> FunDecl .
+  op WaitForCoffeeMakerToBeReady : -> Name .
+  eq WaitForCoffeeMakerToBeReady# = fun WaitForCoffeeMakerToBeReady() {
+    receive {
+      case eCoffeeMakerReady : {
+      }
+      case eCoffeeMakerError : (status : tCoffeeMakerState) {
+               raise halt ;
+      }
+    }
+  } .
+
+  --- Constants for module Users
+  op Users : -> Name .
+  --- module Users = { SaneUser, CrazyUser } ; .
+endm
+
+mod EXPRESSO-RUN is
+  inc EXPRESSO .
+
+  op init : -> System .
+  eq init = init([CoffeeMakerControlPanel#]
+                 [EspressoCoffeeMaker#]
+                 [TestWithSaneUser#]
+                 [TestWithCrazyUser#]
+                 [SaneUser#]
+                 [CrazyUser#]
+                 [EspressoMachineModesOfOperation#]
+                 [PerformOperationOnCoffeeMaker#]
+                 [WaitForCoffeeMakerToBeReady#]
+                 [tcSaneUserUsingCoffeeMachine#]
+                 [tcCrazyUserUsingCoffeeMachine#]) .
+endm

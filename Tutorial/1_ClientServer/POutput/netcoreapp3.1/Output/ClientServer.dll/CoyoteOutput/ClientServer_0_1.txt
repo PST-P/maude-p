@@ -1,0 +1,483 @@
+<TestLog> Running test 'PImplementation.tcSingleClientAbstractServer.Execute'.
+<CreateLog> BankBalanceIsAlwaysCorrect was created.
+<MonitorLog> BankBalanceIsAlwaysCorrect enters state 'Init_3'.
+<CreateLog> GuaranteedWithDrawProgress was created.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<CreateLog> Plang.CSharpRuntime._GodMachine(1) was created by task '2'.
+<CreateLog> PImplementation.TestWithSingleClient(2) was created by Plang.CSharpRuntime._GodMachine(1).
+<StateLog> PImplementation.TestWithSingleClient(2) enters state 'Init_4'.
+<CreateLog> BankServer(3) was created by PImplementation.TestWithSingleClient(2).
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eSpec_BankBalanceIsAlwaysCorrect_Init' in state 'Init_3'.
+<MonitorLog> BankBalanceIsAlwaysCorrect exits state 'Init_3'.
+<MonitorLog> BankBalanceIsAlwaysCorrect enters state 'WaitForWithDrawReqAndResp'.
+<StateLog> BankServer(3) enters state 'WaitForWithdrawRequests_1'.
+<CreateLog> Client(4) was created by PImplementation.TestWithSingleClient(2).
+<StateLog> Client(4) enters state 'Init_2'.
+<GotoLog> Client(4) is transitioning from state 'Init_2' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'Init_2'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:13, rId:1, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:13, rId:1, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:15, rId:1, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:15, rId:1, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 1 failed, account balance = 15
+<PrintLog> Still have account balance = 15, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:9, rId:2, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:9, rId:2, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:15, rId:2, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:15, rId:2, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 2 failed, account balance = 15
+<PrintLog> Still have account balance = 15, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:3, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:3, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:15, rId:3, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:15, rId:3, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 3 failed, account balance = 15
+<PrintLog> Still have account balance = 15, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:4, rId:4, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:4, rId:4, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:0, accountId:0, balance:11, rId:4, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:0, accountId:0, balance:11, rId:4, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 4 succeeded, new account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:11, rId:5, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:11, rId:5, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:5, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:5, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 5 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:2, rId:6, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:2, rId:6, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:6, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:6, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 6 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:7, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:7, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:7, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:7, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 7 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:3, rId:8, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:3, rId:8, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:8, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:8, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 8 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:4, rId:9, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:4, rId:9, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:9, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:9, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 9 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:7, rId:10, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:7, rId:10, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:10, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:10, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 10 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:2, rId:11, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:2, rId:11, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:11, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:11, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 11 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:11, rId:12, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:11, rId:12, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:12, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:12, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 12 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:13, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:13, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:13, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:13, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 13 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:7, rId:14, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:7, rId:14, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:14, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:14, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 14 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:15, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:15, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:15, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:15, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 15 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:11, rId:16, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:11, rId:16, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:16, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:16, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 16 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:5, rId:17, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:5, rId:17, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:17, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:17, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 17 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:7, rId:18, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:7, rId:18, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:18, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:18, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 18 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:8, rId:19, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:8, rId:19, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:19, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:19, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 19 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:20, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:20, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:20, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:20, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 20 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:21, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:10, rId:21, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:21, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:21, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 21 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:9, rId:22, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:9, rId:22, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:22, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:22, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 22 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:8, rId:23, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:8, rId:23, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests_1' sent event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:23, >)' to 'Client(4)'.
+<DequeueLog> 'Client(4)' dequeued event 'eWithDrawResp with payload (<status:1, accountId:0, balance:11, rId:23, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 23 failed, account balance = 11
+<PrintLog> Still have account balance = 11, lets try and withdraw more
+<GotoLog> Client(4) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(4) exits state 'WithdrawMoney'.
+<StateLog> Client(4) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(4)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:1, rId:24, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(4), accountId:0, amount:1, rId:24, >)' in state 'WaitForWithdrawRequests_1'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<ErrorLog> Assertion Failed: Bank must accept the withdraw request for 1, bank balance is 11!
+<StackTrace>    at Microsoft.Coyote.SystematicTesting.OperationScheduler.NotifyAssertionFailure(String text, Boolean killTasks, Boolean cancelExecution)
+   at Microsoft.Coyote.SystematicTesting.ControlledRuntime.Assert(Boolean predicate, String s, Object[] args)
+   at Microsoft.Coyote.Specifications.Monitor.Assert(Boolean predicate, String s, Object[] args)
+   at Plang.CSharpRuntime.PMonitor.TryAssert(Boolean predicate, String s, Object[] args)
+   at PImplementation.BankBalanceIsAlwaysCorrect.Anon_13(Event currentMachine_dequeuedEvent)
+   at Microsoft.Coyote.Specifications.Monitor.ExecuteAction(CachedDelegate cachedAction, Event e)
+   at Microsoft.Coyote.Specifications.Monitor.Do(String actionName, Event e)
+   at Microsoft.Coyote.SystematicTesting.ControlledRuntime.Monitor(Type type, Event e, String senderName, String senderType, String senderStateName)
+   at Microsoft.Coyote.Actors.Actor.Monitor(Type type, Event e)
+   at Plang.CSharpRuntime.PMachine.AnnounceInternal(Event ev)
+   at Plang.CSharpRuntime.PMachine.TrySendEvent(PMachineValue target, Event ev, Object payload)
+   at PImplementation.AbstractBankServer.Anon_10(Event currentMachine_dequeuedEvent)
+   at Microsoft.Coyote.Actors.Actor.InvokeActionAsync(CachedDelegate cachedAction, Event e)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.Coyote.Actors.Actor.InvokeActionAsync(CachedDelegate cachedAction, Event e)
+   at Microsoft.Coyote.Actors.StateMachine.HandleEventAsync(Event e, State declaringState, EventHandlerDeclaration eventHandler)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.Coyote.Actors.StateMachine.HandleEventAsync(Event e, State declaringState, EventHandlerDeclaration eventHandler)
+   at Microsoft.Coyote.Actors.StateMachine.HandleEventAsync(Event e)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.Coyote.Actors.StateMachine.HandleEventAsync(Event e)
+   at Microsoft.Coyote.Actors.Actor.RunEventHandlerAsync()
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.Coyote.Actors.Actor.RunEventHandlerAsync()
+   at Microsoft.Coyote.SystematicTesting.ControlledRuntime.<>c__DisplayClass31_0.<<RunActorEventHandler>b__0>d.MoveNext()
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.Coyote.SystematicTesting.ControlledRuntime.<>c__DisplayClass31_0.<RunActorEventHandler>b__0()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.<>c.<.cctor>b__274_0(Object obj)
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+   at System.Threading.Tasks.Task.ExecuteEntryUnsafe(Thread threadPoolThread)
+   at System.Threading.Tasks.Task.ExecuteFromThreadPool(Thread threadPoolThread)
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading._ThreadPoolWaitCallback.PerformWaitCallback()
+
+<StrategyLog> Found bug using 'random' strategy.
+<StrategyLog> Testing statistics:
+<StrategyLog> Found 1 bug.
+<StrategyLog> Scheduling statistics:
+<StrategyLog> Explored 1 schedule: 1 fair and 0 unfair.
+<StrategyLog> Found 100.00% buggy schedules.
+<StrategyLog> Number of scheduling points in fair terminating schedules: 127 (min), 127 (avg), 127 (max).

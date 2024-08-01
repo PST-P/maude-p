@@ -1,0 +1,11 @@
+<!-- P Project file for the Bikes example -->
+<Project>
+    <ProjectName>Bikes</ProjectName>
+    <InputFiles>
+        <PFile>./PSrc/</PFile>
+        <PFile>./PSpec/</PFile>
+        <PFile>./PTst/</PFile>
+        <PFile>./PForeign/</PFile>
+    </InputFiles>
+    <OutputDir>./PGenerated/</OutputDir>
+</Project>

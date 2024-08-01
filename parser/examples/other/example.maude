@@ -1,0 +1,7 @@
+XXXXXXXXXXXXXXXXXXXXXXXXXX {'Bike': ['Bike', {'Init': ['Init', {'entry': {'input': ['input', {'initialPrice': ['initialPrice', {}], 'initialWeight': ['initialWeight', {}], 'initialLoad': ['initialLoad', {}]}]}}]}], 'Factory': ['Factory', {}]}
+Recibió Init {'Init': ['Init', {'entry': {'input': ['input', {'initialPrice': ['initialPrice', {}], 'initialWeight': ['initialWeight', {}], 'initialLoad': ['initialLoad', {}]}]}}]}
+También recibe {'Bike': 'Bike', 'Factory': 'Factory', 'pieces': 'pieces', 'price': 'price', 'weight': 'weight', 'load': 'load', 'light': 'light', 'music': 'music', 'gps': 'gps', 'guideApp': 'guideApp', 'naviApp': 'naviApp', 'maxPrice': 'maxPrice', 'initialPrice': 'initialPrice$String', 'Init': 'Init'}
+EEEEEEEEEEEEEEEEEEEEEEE {'Bike': 'Bike', 'Factory': 'Factory', 'pieces': 'pieces', 'price': 'price', 'weight': 'weight', 'load': 'load', 'light': 'light', 'music': 'music', 'gps': 'gps', 'guideApp': 'guideApp', 'naviApp': 'naviApp', 'maxPrice': 'maxPrice', 'initialPrice': 'initialPrice$String', 'Init': 'Init'}
+RRRRRRRRRRRRRRRRRRR {'input': ['input', {'initialPrice': ['initialPrice', {}], 'initialWeight': ['initialWeight', {}], 'initialLoad': ['initialLoad', {}]}]}
+CCCCCCCCCCCCCCCCCCCCCCCCCCCC -1 input input inpu
+BBBBBBBBBBBBBBBBBBBBB {'input': ['input', {'initialPrice': ['initialPrice', {}], 'initialWeight': ['initialWeight', {}], 'initialLoad': ['initialLoad', {}]}]}

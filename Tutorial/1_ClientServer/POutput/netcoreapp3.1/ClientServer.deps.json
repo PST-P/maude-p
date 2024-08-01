@@ -1,0 +1,68 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.1",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "ClientServer/1.0.0": {
+        "dependencies": {
+          "Microsoft.Coyote": "1.0.5",
+          "PCSharpRuntime": "1.1.19"
+        },
+        "runtime": {
+          "ClientServer.dll": {}
+        }
+      },
+      "Microsoft.Coyote/1.0.5": {
+        "runtime": {
+          "lib/netcoreapp3.1/CoyoteCoverageReportMerger.dll": {
+            "assemblyVersion": "1.0.5.0",
+            "fileVersion": "1.0.5.0"
+          },
+          "lib/netcoreapp3.1/Microsoft.Coyote.dll": {
+            "assemblyVersion": "1.0.5.0",
+            "fileVersion": "1.0.5.0"
+          },
+          "lib/netcoreapp3.1/coyote.dll": {
+            "assemblyVersion": "1.0.5.0",
+            "fileVersion": "1.0.5.0"
+          }
+        }
+      },
+      "PCSharpRuntime/1.1.19": {
+        "dependencies": {
+          "Microsoft.Coyote": "1.0.5"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/PCSharpRuntime.dll": {
+            "assemblyVersion": "1.1.19.0",
+            "fileVersion": "1.1.19.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ClientServer/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Coyote/1.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XDWmPwNvSYS54/TmrpUBW/eHcqauAqW9V5wD8GB/kStohf8Ogsfu61CBMiQFMx1KzZAWsivgjkAaBUfrxgvb2A==",
+      "path": "microsoft.coyote/1.0.5",
+      "hashPath": "microsoft.coyote.1.0.5.nupkg.sha512"
+    },
+    "PCSharpRuntime/1.1.19": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Kqf2voJLutXJQTwR21y9oba3z5ncTKOgohVONpp27R4rJfjQlhI9gCVtyNCjKfwpX1EjB1t0N4TLiVe1ick1Hw==",
+      "path": "pcsharpruntime/1.1.19",
+      "hashPath": "pcsharpruntime.1.1.19.nupkg.sha512"
+    }
+  }
+}

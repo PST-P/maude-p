@@ -1,0 +1,242 @@
+load p-prelude.maude
+
+fmod PRE-P-TYPE is 
+  pr BOOL .
+  sorts PVoid UniversalType .
+  subsort PVoid < UniversalType .
+  op if_then_else_fi : PVoid PVoid PVoid -> PVoid .
+  ---- op _,_ : PVoid PVoid -> PVoid [assoc] .
+  vars X Y : [PVoid] .
+  eq if true then X else Y fi = X .
+  eq if false then X else Y fi = Y .
+endfm 
+
+view UniversalType from TRIV to PRE-P-TYPE is 
+  sort Elt to UniversalType . 
+endv
+
+--------------------------------------------------------------------------
+
+fmod SEQ{X :: TRIV} is
+  pr LIST{X} .
+
+  var  L : List{X} .
+  vars E E' : X$Elt .
+  var  N : Nat .
+
+  op getSeq : Nat List{X} -> [X$Elt] .
+  eq getSeq(0, E @ L) = E .
+  eq getSeq(s N, E @ L) = getSeq(N, L) .
+
+  op setSeq : Nat X$Elt List{X} -> [List{X}] .
+  eq setSeq(0, E, E' @ L) = E @ L .
+  eq setSeq(s N, E, E' @ L) = E' @ setSeq(N, E, L) .
+
+  op insertSeq : Nat X$Elt List{X} -> [List{X}] .
+  eq insertSeq(0, E, L) = E @ L .
+  eq insertSeq(s N, E, E' @ L) = E' @ insertSeq(N, E, L) .
+endfm
+
+fmod SEQ-TYPE is 
+  pr SEQ{UniversalType}  .
+  sort SeqType .
+  subsort PVoid < SeqType < UniversalType .
+  op seq{_} : List{UniversalType} -> SeqType .
+
+  var  L : List{UniversalType} .
+
+  op size : SeqType -> Nat .
+  eq size(seq{L}) = sizeL(L) .
+endfm
+
+view SeqType from TRIV to SEQ-TYPE is
+  sort Elt to SeqType .
+endv
+
+view Seq{X :: TRIV} from TRIV to SEQ{X} is
+  sort Elt to List{X} .
+endv
+
+--------------------------------------------------------------------------
+
+fmod SET-TYPE is 
+  pr SET{UniversalType}  .
+  pr SEQ-TYPE  .
+  sort SetType .
+  subsort PVoid < SetType < UniversalType .
+----  op set{_} : Set{UniversalType} -> SetType .
+  op set{_} : List{UniversalType} -> SetType .
+
+  var  L : List{UniversalType} .
+  vars E E' : UniversalType .
+  var  N : Nat .
+
+  op getSet : Nat List{UniversalType} -> [UniversalType] .
+  eq getSet(0, E @ L) = E .
+  eq getSet(s N, E @ L) = getSet(N, L) .
+
+  op setSet : Nat UniversalType List{UniversalType} -> [List{UniversalType}] .
+  eq setSet(0, E, E' @ L) = E @ L .
+  eq setSet(s N, E, E' @ L) = E' @ setSet(N, E, L) .
+endfm
+
+view SetType from TRIV to SET-TYPE is
+  sort Elt to SetType .
+endv
+
+--------------------------------------------------------------------------
+
+fmod MAP-TYPE is
+  pr SEQ-TYPE .
+  pr SET-TYPE .
+  pr MAP{UniversalType,UniversalType} .
+----      * (op _|->_ to _P|->_, 
+----         op undefined to Pundefined) .
+  
+  sort MapType .
+  subsort PVoid < MapType < UniversalType .
+  op map{_} : Map{UniversalType,UniversalType} -> MapType .
+
+  vars I I' : UniversalType . 
+  var  ME : MapType .
+  var  MU : Map{UniversalType,UniversalType} .
+  var  SqE : SeqType .
+  var  StE : SetType .
+  var  LU : List{UniversalType} .
+----  var  SU : Set{UniversalType} .
+  var  SU : List{UniversalType} .
+
+  op getKeySeq : MapType -> List{UniversalType} . ---- TODO: Not confluent
+  eq getKeySeq(map{(empty)}) = nil .
+  eq getKeySeq(map{(I |-> I', MU)}) = getKeySeq(map{(MU)}) @ I .
+
+  op getKeySet : MapType -> Set{UniversalType} . 
+  eq getKeySet(map{(empty)}) = empty .
+  eq getKeySet(map{(I |-> I', MU)}) = getKeySet(map{(MU)}) # I .
+endfm
+
+view MapType from TRIV to MAP-TYPE is
+  sort Elt to MapType .
+endv
+
+view Map{X :: TRIV, Y :: TRIV} from TRIV to MAP{X, Y} is
+  sort Elt to Map{X, Y} .
+endv
+
+--------------------------------------------------------------------------
+
+--- P-TYPE. P's Type hierarchy 
+fmod P-TYPE is   
+   pr RAT .
+   pr STRING .
+   pr FLOAT .
+   pr CONVERSION .
+   pr SEQ-TYPE .
+   pr SET-TYPE .
+   pr MAP-TYPE .
+
+   sorts Machine PrimitiveType ---- Event 
+         TupleType NamedTupleType ---- SetType SeqType MapType 
+         ---- UniversalType 
+         UserDefinedType . 
+
+   --- Rat instead of Int
+   subsort PVoid < Int Float String Bool < PrimitiveType . ---- Event Machine
+   subsort PVoid < PrimitiveType TupleType NamedTupleType 
+                   SeqType SetType MapType 
+                   UserDefinedType
+                 < UniversalType .
+
+   --- This subsort relation avoids some preregularity warnings. For 
+   --- example, if the user wants Nat as Oid. As Nat is not subsort of 
+   --- PVoid (In fact, only Rat is defined as PVoid < Rat < Oid) we need 
+   --- to put PVoid as subsort of Nat. This relation puts the least sort 
+   --- in the kind. This way we cover all the possibilities 
+   subsort PVoid < NzNat Zero Char FiniteFloat .
+
+   --- The "null" constant is the only PVoid value
+   op null : -> PVoid [ctor] .
+
+   --- To provide Integers and Floats compatibility
+   eq O1:Rat .+. O2:Float  = rat2float(O1:Rat) +F O2:Float .
+   eq O1:Float .+. O2:Rat  = O1:Float +F rat2float(O2:Rat) .
+   ---- TODO: the ambiguity between -_ and _-_ is inherited by all related operatos
+   ---- eq O1:Rat .-. O2:Float  = rat2float(O1:Rat) -F O2:Float .
+   eq _.-._(O1:Rat, O2:Float)  = _-F_(rat2float(O1:Rat), O2:Float) .
+   ---- TODO: the ambiguity between -_ and _-_ is inherited by all related operatos
+   ---- eq O1:Float .-. O2:Rat  = O1:Float -F rat2float(O2:Rat) .
+   eq _.-._(O1:Float, O2:Rat) = _-F_(O1:Float, rat2float(O2:Rat)) .
+   eq O1:Rat .*. O2:Float  = rat2float(O1:Rat) *F O2:Float .
+   eq O1:Float .*. O2:Rat  = O1:Float *F rat2float(O2:Rat) .
+   eq O1:Rat ./. O2:Float  = rat2float(O1:Rat) /F O2:Float .
+   eq O1:Float ./. O2:Rat  = O1:Float /F rat2float(O2:Rat) .
+   eq O1:Rat .>. O2:Float  = rat2float(O1:Rat) >F O2:Float .
+   eq O1:Float .>. O2:Rat  = O1:Float >F rat2float(O2:Rat) .
+   eq O1:Rat .>=. O2:Float  = rat2float(O1:Rat) >=F O2:Float .
+   eq O1:Float .>=. O2:Rat  = O1:Float >=F rat2float(O2:Rat) .
+   eq O1:Rat .<. O2:Float  = rat2float(O1:Rat) <F O2:Float .
+   eq O1:Float .<. O2:Rat  = O1:Float <F rat2float(O2:Rat) .
+   eq O1:Rat .<=. O2:Float  = rat2float(O1:Rat) <=F O2:Float .
+   eq O1:Float .<=. O2:Rat  = O1:Float <=F rat2float(O2:Rat) .
+
+   --- We declare these operators in PVoid to avoid preregularity warnings
+   --- Note that PVoid is set as subsort of any predefined sort
+   op .-._ : PVoid -> PVoid .
+   op .abs._ : PVoid -> PVoid .
+   op .max. : PVoid PVoid -> PVoid . 
+   op .min. : PVoid PVoid -> PVoid . 
+   op _.+._ : PVoid PVoid -> PVoid [prec 37] . 
+   op _.-._ : PVoid PVoid -> PVoid .
+   op _.*._ : PVoid PVoid -> PVoid .
+   op _./._ : PVoid PVoid -> PVoid .
+   op _.<._ : PVoid PVoid -> Bool .
+   op _.>._ : PVoid PVoid -> Bool .
+   op _.<=._ : PVoid PVoid -> Bool .
+   op _.>=._ : PVoid PVoid -> Bool .
+
+   --- Rat (instead of Int)
+   --- 
+   eq .-. O1:Rat  = -I O1:Rat .
+   eq O1:Rat .+. O2:Rat  = O1:Rat +N O2:Rat .
+   ---- TODO: the ambiguity between -_ and _-_ is inherited by all related operatos
+   ---- eq O1:Rat .-. O2:Rat  = O1:Rat -I O2:Rat .
+   eq _.-._(O1:Rat, O2:Rat)  = _-I_(O1:Rat, O2:Rat) .
+   eq O1:Rat .*. O2:Rat  = O1:Rat *N O2:Rat .
+   eq O1:Rat ./. O2:Rat  = O1:Rat // O2:Rat .
+
+   eq O1:Rat .<. O2:Rat  = O1:Rat <N O2:Rat .
+   eq O1:Rat .>. O2:Rat  = O1:Rat >N O2:Rat .
+   eq O1:Rat .<=. O2:Rat  = O1:Rat <=N O2:Rat .
+   eq O1:Rat .>=. O2:Rat  = O1:Rat >=N O2:Rat .
+   eq .abs.(O1:Rat) = abs(O1:Rat) .
+   eq .max.(O1:Rat, O2:Rat) = max(O1:Rat, O2:Rat) .
+   eq .min.(O1:Rat, O2:Rat) = min(O1:Rat, O2:Rat) .
+
+   --- Float
+   --- 
+   eq .abs. O1:Float =  absF(O1:Float) . 
+   eq .-. O1:Float   =  -F O1:Float . 
+   eq .max.(O1:Float,O2:Float) = maxF(O1:Float, O2:Float) .
+   eq .min.(O1:Float,O2:Float) = minF(O1:Float, O2:Float) .
+   eq O1:Float .+. O2:Float  = O1:Float +F O2:Float .
+   ---- TODO: the ambiguity between -_ and _-_ is inherited by all related operatos
+   ---- eq O1:Float .-. O2:Float  = O1:Float -F O2:Float . 
+   eq _.-._(O1:Float, O2:Float) = _-F_(O1:Float, O2:Float) . 
+   eq O1:Float .*. O2:Float  = O1:Float *F O2:Float .
+   eq O1:Float ./. O2:Float  = O1:Float /F O2:Float .
+   eq O1:Float .<. O2:Float  = O1:Float <F O2:Float .
+   eq O1:Float .>. O2:Float  = O1:Float >F O2:Float .
+   eq O1:Float .<=. O2:Float = O1:Float <=F O2:Float .
+   eq O1:Float .>=. O2:Float = O1:Float >=F O2:Float .
+
+   --- String
+   --- 
+   eq O1:String .+.  O2:String = O1:String ++  O2:String .
+   eq O1:String .<.  O2:String = O1:String lt  O2:String .
+   eq O1:String .>.  O2:String = O1:String gt  O2:String .
+   eq O1:String .<=. O2:String = O1:String leq O2:String .
+   eq O1:String .>=. O2:String = O1:String geq O2:String .
+endfm
+
+set show advisories on .
+

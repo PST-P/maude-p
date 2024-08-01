@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "mm46AZV6CNZTTF9THIAFGih7B+r/RbLTdjhVBFb1du6cNYQKUvy4yB/6F8PhIpSxqYcBW3togIMW89J/9Mt3tA==",
+  "success": true,
+  "projectFilePath": "/Users/duran/git/p/Tutorial/1_ClientServer/ClientServer.csproj",
+  "expectedPackageFiles": [
+    "/Users/duran/.nuget/packages/microsoft.coyote/1.0.5/microsoft.coyote.1.0.5.nupkg.sha512",
+    "/Users/duran/.nuget/packages/pcsharpruntime/1.1.19/pcsharpruntime.1.1.19.nupkg.sha512"
+  ],
+  "logs": []
+}

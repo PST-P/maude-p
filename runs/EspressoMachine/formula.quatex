@@ -1,0 +1,40 @@
+// Probability of making a coffee in less than N steps
+Prob(N) = if (s.rval("done(State)")) then 1.0
+          else if N > 0 then # Prob(N - 1) 
+               else 0.0
+               fi
+          fi;
+eval E[Prob (100000) ];
+
+// Probability of getting into the NotWarmedUp state
+NotWarmedUp(N) = if (s.rval("state(State, NotWarmedUp)")) then 1.0
+          else if N > 0 then # Prob(N - 1) 
+               else 0.0
+               fi
+          fi;
+eval E[NotWarmedUp (100000) ];
+
+// Probability of getting into the Ready state
+Ready(N) = if (s.rval("state(State, Ready)")) then 1.0
+          else if N > 0 then # Prob(N - 1) 
+               else 0.0
+               fi
+          fi;
+eval E[Ready (100000) ];
+
+// Probability of getting into the NoBeansError state
+NoBeansError(N) = if (s.rval("state(State, NoBeansError)")) then 1.0
+          else if N > 0 then # Prob(N - 1) 
+               else 0.0
+               fi
+          fi;
+eval E[NoBeansError (100000) ];
+
+// Probability of getting into the NoWaterError state
+NoWaterError(N) = if (s.rval("state(State, NoWaterError)")) then 1.0
+          else if N > 0 then # Prob(N - 1) 
+               else 0.0
+               fi
+          fi;
+eval E[NoWaterError (100000) ];
+

@@ -1,0 +1,127 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module DICE
+---- 
+---- Located at ../../Dice/
+---- Date 2024-07-18 15:26:10.828394
+---- 
+--------------------------------------------------------------------
+
+load /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude
+
+mod DICE is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tObserver .
+  subsort tObserver < UserDefinedType .
+  op tObserver : -> UserDefinedTypeName .
+
+  --- Constants for event declarations
+  op oneStep : -> EventName .
+
+  --- Constants for machine Dice
+  op Dice# : -> MachineDecl .
+  op Dice : -> UserDefinedTypeName .
+  op Dice : -> Name .
+  op faces : -> MapVarId .
+  op nOfFaces : -> IntVarId .
+  op i : -> IntVarId .
+  op Init : -> Name .
+  op Throw : -> Name .
+
+  eq Dice# = machine Dice {
+       var faces : map[int,int] ;
+       var nOfFaces : int ;
+       var i : int ;
+
+       start state Init {
+         entry {
+           nOfFaces = 6 ;
+           i = 1 ;
+           while (i <= nOfFaces) {
+             faces[i] = 0 ;
+             i = i + 1 ;
+           }
+           goto Throw ;
+         }
+       }
+
+       state Throw {
+         on oneStep do {
+           i = choose ( nOfFaces ) + 1 ;
+           faces[i] = faces[i] + 1 ;
+         }
+       }
+  } .
+
+  --- Constants for module Dice
+  --- module Dice = { Dice } ; .
+
+  --- Constants for function Decode
+  op Decode# : -> FunDecl .
+  op Decode : -> Name .
+  op o : -> VarId .
+  eq Decode# = fun Decode(o : any) : string ; .
+
+  --- Constants for function AddMachine
+  op AddMachine# : -> FunDecl .
+  op AddMachine : -> Name .
+  op name : -> StringVarId .
+  eq AddMachine# = fun AddMachine(name : string) ; .
+
+  --- Constants for function GetInfo
+  op GetInfo# : -> FunDecl .
+  op GetInfo : -> Name .
+  eq GetInfo# = fun GetInfo() : any ; .
+
+  --- Constants for test tThrow
+  op tThrow# : -> TestDecl .
+  op tThrow : -> Name .
+  eq tThrow# = test tThrow [main = TestSingleThrow] :
+    union Dice, { TestSingleThrow } ; .
+
+  --- Constants for test tNThrows
+  op tNThrows# : -> TestDecl .
+  op tNThrows : -> Name .
+  eq tNThrows# = test tNThrows [main = TestNThrows] :
+    union Dice, { TestNThrows } ; .
+
+  --- Constants for machine TestSingleThrow
+  op TestSingleThrow# : -> MachineDecl .
+  op TestSingleThrow : -> UserDefinedTypeName .
+  op TestSingleThrow : -> Name .
+  op dice : -> MachVarId .
+
+  eq TestSingleThrow# = machine TestSingleThrow {
+
+       start state Init {
+         entry {
+           var dice : Dice ;
+           dice = new Dice ( ) ;
+         }
+       }
+  } .
+
+  --- Constants for machine TestNThrows
+  op TestNThrows# : -> MachineDecl .
+  op TestNThrows : -> UserDefinedTypeName .
+  op TestNThrows : -> Name .
+  op nThrows : -> IntVarId .
+
+  eq TestNThrows# = machine TestNThrows {
+
+       start state Init {
+         entry {
+           var dice : Dice ;
+           var i : int ;
+           var nThrows : int ;
+           dice = new Dice ( ) ;
+           i = 0 ;
+           nThrows = 1000 ;
+           while (i <= nThrows) {
+             send dice, oneStep ;
+           }
+         }
+       }
+  } .
+endm

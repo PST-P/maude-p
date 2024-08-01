@@ -1,0 +1,369 @@
+-------------------------------------------------------------
+---- Maude Code Generated for Module BIKES
+-------------------------------------------------------------
+
+load ../../p-0.3.maude 
+
+mod BIKES is
+  inc SYSTEM-EXEC .
+
+
+  --- Constants for function priceAux
+  op priceAux# : -> FunDecl .
+  op priceAux : -> Name .
+  op price$Map : -> MapVarId .
+  op pieces : -> SeqVarId .
+  op piece$Bool : -> BoolVarId .
+  op x : -> IntVarId .
+  op y : -> BoolVarId .
+  op piece$Int : -> IntVarId .
+  op totalPrice : -> IntVarId .
+  op accountId : -> IntVarId .
+  op balance : -> IntVarId .
+  op totalPrice$Float : -> FloatVarId .
+  eq priceAux# = fun priceAux(x : int) : map[string,float] {
+    var price$Map : map[string,float] ;
+    var pieces : seq[string] ;
+    var piece$Bool : bool ;
+    price$Map [ "AllYear" ] = 100.0 ;
+    price$Map [ "Summer" ] = 70.0 ;
+    price$Map [ "Winter" ] = 80.0 ;
+    price$Map [ "Light" ] = 15.0 ;
+    price$Map [ "Dynamo" ] = 40.0 ;
+    price$Map [ "Battery" ] = 150.0 ;
+    price$Map [ "Engine" ] = 300.0 ;
+    price$Map [ "MapsApp" ] = 10.0 ;
+    price$Map [ "NaviApp" ] = 20.0 ;
+    price$Map [ "GuideApp" ] = 10.0 ;
+    price$Map [ "Music" ] = 10.0 ;
+    price$Map [ "GPS" ] = 20.0 ;
+    price$Map [ "Basket" ] = 8.0 ;
+    price$Map [ "Diamond" ] = 100.0 ;
+    price$Map [ "StepThru" ] = 90.0 ;
+    receive {
+      case eReadQueryResp, eSuperOh: (x : int, y : bool) {
+               var piece$Int : int ;
+               var totalPrice : int ;
+               totalPrice = x + y + piece$Int ;
+      }
+      case eReadQueryOther: (accountId : int, balance : int) {
+               piece$Bool = accountId * balance ;
+      }
+      case algunoMas: {
+               var totalPrice$Float : float ;
+               piece$Bool = totalPrice$Float * 2 ;
+               receive {
+                 case caso1, caso2: {
+                 var piece$Bool : bool ;
+                 print piece$Bool ;
+                 }
+               }
+      }
+    }
+    return price$Map ;
+  } .
+
+  --- Constants for machine Bike
+  op Bike# : -> MachineDecl .
+  op Bike : -> UserDefinedTypeName .
+  op Bike : -> Name .
+  op pieces$Set : -> SetVarId .
+  op light : -> BoolVarId .
+  op music : -> BoolVarId .
+  op apps : -> BoolVarId .
+  op Factory : -> Name .
+  op Deposit : -> Name .
+  op Parked : -> Name .
+  op Moving : -> Name .
+  op Halted : -> Name .
+  op Broken : -> Name .
+  op Trash : -> Name .
+  op Out# : -> FunDecl .
+  op Out : -> Name .
+  op Out2# : -> FunDecl .
+  op Out2 : -> Name .
+  op Out3# : -> FunDecl .
+  op Out3 : -> Name .
+  op Out4# : -> FunDecl .
+  op Out4 : -> Name .
+  op initialPrice : -> FloatVarId .
+  op algo : -> IntVarId .
+  op otro : -> IntVarId .
+  op input : -> VarId .
+  op piece : -> StringVarId .
+  op price : -> FloatVarId .
+  op light$Int : -> IntVarId .
+  op music$Int : -> IntVarId .
+  op pieceOld : -> StringVarId .
+  op priceOld : -> FloatVarId .
+  op pieceNew : -> StringVarId .
+  op priceNew : -> FloatVarId .
+  op a : -> IntVarId .
+  op b$Float : -> FloatVarId .
+  op replacement : -> StringVarId .
+  op out : -> IntVarId .
+  op b : -> MachVarId .
+  op light$String : -> StringVarId .
+
+  eq Bike# = machine Bike {
+       var pieces$Set : set[string] ;
+       var totalPrice$Float : float ;
+       var light : bool ;
+       var music : bool ;
+       var apps : bool ;
+
+       start state Factory {
+         entry (initialPrice : float) {
+           var algo : int ;
+           var otro : int ;
+           var totalPrice : int ;
+           totalPrice = initialPrice ;
+           light = false ;
+           music = false ;
+           apps = false ;
+         }
+
+         on install do (input : (piece : string, price : float)) {
+           var totalPrice : int ;
+           var light$Int : int ;
+           var music$Int : int ;
+           print piece ;
+           input . piece = 10 ;
+           input . 5 = 20 ;
+           totalPrice = input . 10 ;
+           pieces$Set += ( input . piece ) ;
+           totalPrice = light$Int ;
+           totalPrice = totalPrice + input . price ;
+         }
+
+         on replace do (input : (pieceOld : string, priceOld : float, pieceNew : string, priceNew : float)) {
+           pieces$Set -= ( input . pieceOld ) ;
+           pieces$Set += ( input . pieceNew ) ;
+           totalPrice$Float = totalPrice$Float - input . priceOld + input . priceNew ;
+         }
+
+         on sell do {
+           var music : bool ;
+           if ( music ) {
+             totalPrice$Float = totalPrice$Float + 1 ;
+           }
+           goto Deposit ;
+         }
+
+         on sellito, otrico goto Deposit with {
+           var music : bool ;
+           var totalPrice$Float : float ;
+           if ( music ) {
+             totalPrice$Float = totalPrice$Float + 1 ;
+           }
+           goto Deposit ;
+        }
+         on sellito2, otrico2 goto Deposit with (a : int, b$Float : float) {
+           var music : bool ;
+           var totalPrice$Float : float ;
+           if ( music ) {
+             totalPrice$Float = totalPrice$Float + a + b$Float ;
+           }
+           goto Deposit ;
+        }
+         exit {
+           var music : bool ;
+           if ( music ) {
+             totalPrice$Float = totalPrice$Float + 1 ;
+           }
+           goto Deposit ;
+         }
+
+       }
+
+       state Deposit {
+         on install do (input : (piece : string, price : float)) {
+           totalPrice$Float = totalPrice$Float + input . price ;
+           pieces$Set += ( input . piece ) ;
+         }
+
+         on uninstall do (input : (piece : string, price : float)) {
+           totalPrice$Float = totalPrice$Float - input . price ;
+           pieces$Set -= ( ( input . piece ) ) ;
+         }
+
+         on replace do (input : (pieceOld : string, priceOld : float, pieceNew : string, priceNew : float)) {
+           var pieces$Set : set[string] ;
+           totalPrice$Float = totalPrice$Float + input . priceNew - input . priceOld ;
+           pieces$Set -= ( ( input . pieceOld ) ) ;
+           pieces$Set += ( input . pieceNew ) ;
+         }
+
+         on deploy do {
+           goto Parked ;
+         }
+
+       }
+
+       state Parked {
+         on maintain do {
+           goto Deposit ;
+         }
+
+         on book do {
+           goto Moving ;
+         }
+
+       }
+
+       state Moving {
+         on light do {
+           light = ! light ;
+         }
+
+         on music do {
+           music = ! music ;
+         }
+
+         on stop do {
+           goto Halted ;
+         }
+
+         on obreak do {
+           goto Broken ;
+         }
+
+       }
+
+       state Halted {
+         on ostart do {
+           goto Moving ;
+         }
+
+         on light do {
+           light = ! light ;
+         }
+
+         on music do {
+           music = ! music ;
+         }
+
+         on apps do {
+           apps = ! apps ;
+         }
+
+         on park do {
+           goto Parked ;
+         }
+
+         on obreak do {
+           goto Broken ;
+         }
+
+       }
+
+       state Broken {
+         on assistance do {
+           goto Deposit ;
+         }
+
+         on dump do {
+           goto Trash ;
+         }
+
+       }
+
+       state Trash {
+       }
+       fun Out (b : Bike) : int {
+         var piece : string ;
+         var replacement : string ;
+         var out : int ;
+         print out ;
+         receive {
+           case eReadQueryResp, eSuperOh: (x : int, y : bool) {
+               var piece$Int : int ;
+               totalPrice$Float = x + y + piece$Int ;
+           }
+           case eReadQueryOther: (accountId : int, balance : int) {
+               piece = accountId * balance ;
+           }
+           case algunoMas: {
+               var totalPrice$Float : float ;
+               piece = totalPrice$Float * 2 ;
+               receive {
+                 case caso1, caso2: {
+                 var piece$Bool : bool ;
+                 print piece$Bool ;
+                 }
+               }
+           }
+         }
+       }
+
+       fun Out2 (b : Bike) : int {
+         var piece : string ;
+         var replacement : string ;
+         var out : int ;
+         print out + replacement ;
+         return b ;
+       }
+
+       fun Out3 (b : Bike) : int {
+         var piece : string ;
+         var replacement : string ;
+         var light$String : string ;
+         var out : int ;
+         print out + replacement + light$String ;
+         return b ;
+       }
+
+       fun Out4 (b : Bike) : int {
+         var piece : string ;
+         var replacement : string ;
+         var out : int ;
+         print out + replacement + light ;
+         return b ;
+       }
+
+  } .
+
+  --- Constants for function priceInit
+  op priceInit# : -> FunDecl .
+  op priceInit : -> Name .
+  eq priceInit# = fun priceInit() : map[string,float] {
+    var price$Map : map[string,float] ;
+    var totalPrice$Float : float ;
+    print totalPrice$Float ;
+    price$Map [ "AllYear" ] = 100.0 ;
+    price$Map [ "Summer" ] = 70.0 ;
+    price$Map [ "Winter" ] = 80.0 ;
+    price$Map [ "Light" ] = 15.0 ;
+    price$Map [ "Dynamo" ] = 40.0 ;
+    price$Map [ "Battery" ] = 150.0 ;
+    price$Map [ "Engine" ] = 300.0 ;
+    price$Map [ "MapsApp" ] = 10.0 ;
+    price$Map [ "NaviApp" ] = 20.0 ;
+    price$Map [ "GuideApp" ] = 10.0 ;
+    price$Map [ "Music" ] = 10.0 ;
+    price$Map [ "GPS" ] = 20.0 ;
+    price$Map [ "Basket" ] = 8.0 ;
+    price$Map [ "Diamond" ] = 100.0 ;
+    price$Map [ "StepThru" ] = 90.0 ;
+    return price$Map ;
+  } .
+endm
+Bike : machine
+priceAux : func(map[string,float])
+pieces$Set : set[string]
+totalPrice$Float : float
+light : bool
+music : bool
+apps : bool
+Factory : state
+Deposit : state
+Parked : state
+Moving : state
+Halted : state
+Broken : state
+Trash : state
+Out : func(int)
+Out2 : func(int)
+Out3 : func(int)
+Out4 : func(int)
+priceInit : func(map[string,float])

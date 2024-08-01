@@ -1,0 +1,35 @@
+sload bikes.maude 
+
+mod BIKES-PREDS is
+  inc BIKES-RUN .
+
+  sort State .
+  subsort SystemExecState < State .
+  
+  vars MId MId' : MachId .
+  vars Events Events' : Queue{Event} .
+  vars CS CS' : [CodeStack] .
+  vars FS FS' : Set{Function} .
+  vars MS MS' : MemoryStack .
+  var  MM : Memory .
+  var  N : Nat .
+  var  ES : ExecState .
+  var  S : Nat .
+  var  Sys : System .
+  var  Log : String .
+  vars M X Y Id : Name .
+  vars Expr : [Expr] .
+  var  EN : EventName .
+  var  State : State .
+  vars DEs IEs : Set{EventName} .
+  var  SES : SystemExecState .
+
+  op alive : MachId State -> Nat .
+  eq alive(MId, [ [ MId, M, Id, Events, Events', CS, FS, DEs, IEs, MS] ES, S, Sys, Log ]) = 1 .
+  eq alive(MId, SES) = 0 [owise] .
+  
+  op state : MachId Name State -> Nat . 
+  eq state(MId, Id, [ [ MId, M, Id, Events, Events', CS, FS, DEs, IEs, MS] ES, S, Sys, Log ]) = 1 .
+  eq state(MId, Id, SES) = 0 [owise] .
+endm
+

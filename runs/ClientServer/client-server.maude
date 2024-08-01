@@ -1,0 +1,419 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module CLIENT-SERVER
+---- 
+---- Located at ../../Tutorial/1_ClientServer/
+---- Date 2024-07-29 19:35:12.673759
+---- 
+--------------------------------------------------------------------
+
+load ../../p-0.5.maude
+
+mod CLIENT-SERVER is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tWithDrawReq .
+  subsort tWithDrawReq < UserDefinedType .
+  op tWithDrawReq : -> UserDefinedTypeName .
+  op source : -> MachVarId .
+  op accountId : -> IntVarId .
+  op amount : -> IntVarId .
+  op rId : -> IntVarId .
+  op tWithDrawReq : MachId Int Int Int -> tWithDrawReq .
+  sort tWithDrawResp .
+  subsort tWithDrawResp < UserDefinedType .
+  op tWithDrawResp : -> UserDefinedTypeName .
+  op status : -> VarId .
+  op balance : -> IntVarId .
+  op tWithDrawResp : tWithDrawRespStatus Int Int Int -> tWithDrawResp .
+  sort tWithDrawRespStatus .
+  subsort tWithDrawRespStatus < UserDefinedType .
+  op tWithDrawRespStatus : -> UserDefinedTypeName .
+  ops WITHDRAW-SUCCESS WITHDRAW-ERROR : -> tWithDrawRespStatus .
+
+  --- Constants for event declarations
+  op eWithDrawReq : -> EventName .
+  op eWithDrawResp : -> EventName .
+  op eUpdateQuery : -> EventName .
+  op eReadQuery : -> EventName .
+  op eReadQueryResp : -> EventName .
+  op eSpec-BankBalanceIsAlwaysCorrect-Init : -> EventName .
+
+  --- Constants for machine AbstractBankServer
+  op AbstractBankServer# : -> MachineDecl .
+  op AbstractBankServer : -> UserDefinedTypeName .
+  op AbstractBankServer : -> Name .
+  op balance$Map : -> MapVarId .
+  op WaitForWithdrawRequests : -> Name .
+  op init-balance : -> MapVarId .
+  op wReq : -> VarId .
+
+  eq AbstractBankServer# = machine AbstractBankServer {
+       var balance$Map : map[int,int] ;
+
+       start state WaitForWithdrawRequests {
+         entry (init-balance : map[int,int]) {
+           balance$Map = init-balance ;
+         }
+
+         on eWithDrawReq do (wReq : tWithDrawReq) {
+           assert wReq . accountId in balance$Map, "Invalid accountId received in the withdraw request!" ;
+           if (balance$Map[wReq . accountId] - wReq . amount > 10) {
+             balance$Map[wReq . accountId] = balance$Map[wReq . accountId] - wReq . amount ;
+             send wReq . source, eWithDrawResp, (status = WITHDRAW-SUCCESS, accountId = wReq . accountId, balance = balance$Map[wReq . accountId], rId = wReq . rId) ;
+           }
+           else{
+             send wReq . source, eWithDrawResp, (status = WITHDRAW-ERROR, accountId = wReq . accountId, balance = balance$Map[wReq . accountId], rId = wReq . rId) ;
+           }
+         }
+       }
+  } .
+
+  --- Constants for machine Client
+  op Client# : -> MachineDecl .
+  op Client : -> UserDefinedTypeName .
+  op Client : -> Name .
+  op server : -> MachVarId .
+  op nextReqId : -> IntVarId .
+  op numOfWithdrawOps : -> IntVarId .
+  op currentBalance : -> IntVarId .
+  op Init : -> Name .
+  op WithdrawMoney : -> Name .
+  op WithdrawAmount# : -> FunDecl .
+  op WithdrawAmount : -> Name .
+  op NoMoneyToWithDraw : -> Name .
+  op input : -> VarId .
+  op serv : -> MachVarId .
+  op index : -> IntVarId .
+  op resp : -> VarId .
+
+  eq Client# = machine Client {
+       var server : BankServer ;
+       var accountId : int ;
+       var nextReqId : int ;
+       var numOfWithdrawOps : int ;
+       var currentBalance : int ;
+
+       start state Init {
+         entry (input : (serv : BankServer, accountId : int, balance : int)) {
+           server = input . serv ;
+           currentBalance = input . balance ;
+           accountId = input . accountId ;
+           nextReqId = accountId * 100 + 1 ;
+           goto WithdrawMoney ;
+         }
+       }
+
+       state WithdrawMoney {
+         entry {
+           var index : int ;
+           if (currentBalance <= 10) {
+             goto NoMoneyToWithDraw ;
+           }
+           send server, eWithDrawReq, (source = this, accountId = accountId, amount = WithdrawAmount(), rId = nextReqId) ;
+           nextReqId = nextReqId + 1 ;
+         }
+
+         on eWithDrawResp do (resp : tWithDrawResp) {
+           assert resp . balance >= 10, "Bank balance must be greater than 10!!" ;
+           if (resp . status == WITHDRAW-SUCCESS) {
+             print format("Withdrawal with rId = {0} succeeded, new account balance = {1}", resp . rId, resp . balance) ;
+             currentBalance = resp . balance ;
+           }
+           else{
+             assert currentBalance == resp . balance, format("Withdraw failed BUT the account balance changed! client thinks: {0}, bank balance: {1}", currentBalance, resp . balance) ;
+             print format("Withdrawal with rId = {0} failed, account balance = {1}", resp . rId, resp . balance) ;
+           }
+           if (currentBalance > 10) {
+             print format("Still have account balance = {0}, lets try and withdraw more", currentBalance) ;
+           }
+           goto WithdrawMoney ;
+         }
+       }
+       fun WithdrawAmount () : int {
+         return choose ( currentBalance ) + 1 ;
+       }
+
+
+       state NoMoneyToWithDraw {
+         entry {
+           assert currentBalance == 10, "Hmm, I still have money that I can withdraw but I have reached NoMoneyToWithDraw state!" ;
+           print format("No Money to withdraw, waiting for more deposits!") ;
+         }
+       }
+  } .
+
+  --- Constants for module Client
+  op Client : -> Name .
+  --- module Client = { Client } ; .
+
+  --- Constants for module Bank
+  op Bank : -> Name .
+  --- module Bank = { BankServer, Database } ; .
+
+  --- Constants for module AbstractBank
+  op AbstractBank : -> Name .
+  --- module AbstractBank = { AbstractBankServer -> BankServer } ; .
+
+  --- Constants for machine BankServer
+  op BankServer# : -> MachineDecl .
+  op BankServer : -> UserDefinedTypeName .
+  op BankServer : -> Name .
+  op database : -> MachVarId .
+  op initialBalance : -> MapVarId .
+  op response : -> VarId .
+
+  eq BankServer# = machine BankServer {
+       var database : Database ;
+
+       start state Init {
+         entry (initialBalance : map[int,int]) {
+           database = new Database((server = this, initialBalance = initialBalance)) ;
+           goto WaitForWithdrawRequests ;
+         }
+       }
+
+       state WaitForWithdrawRequests {
+         on eWithDrawReq do (wReq : tWithDrawReq) {
+           var currentBalance : int ;
+           var response : tWithDrawResp ;
+           currentBalance = ReadBankBalance(database, wReq . accountId) ;
+           if (currentBalance - wReq . amount >= 10) {
+             UpdateBankBalance(database, wReq . accountId, currentBalance - wReq . amount) ;
+             response = ( status = WITHDRAW-SUCCESS, accountId = wReq . accountId, balance = currentBalance - wReq . amount, rId = wReq . rId ) ;
+           }
+           else{
+             response = ( status = WITHDRAW-ERROR, accountId = wReq . accountId, balance = currentBalance, rId = wReq . rId ) ;
+           }
+           send wReq . source, eWithDrawResp, response ;
+         }
+       }
+  } .
+
+  --- Constants for machine Database
+  op Database# : -> MachineDecl .
+  op Database : -> UserDefinedTypeName .
+  op Database : -> Name .
+  op query : -> VarId .
+
+  eq Database# = machine Database {
+       var server : BankServer ;
+       var balance$Map : map[int,int] ;
+
+       start state Init {
+         entry (input : (server : BankServer, initialBalance : map[int,int])) {
+           server = input . server ;
+           balance$Map = input . initialBalance ;
+         }
+
+         on eUpdateQuery do (query : (accountId : int, balance : int)) {
+           assert query . accountId in balance$Map, "Invalid accountId received in the update query!" ;
+           balance$Map[query . accountId] = query . balance ;
+         }
+
+         on eReadQuery do (query : (accountId : int)) {
+           assert query . accountId in balance$Map, "Invalid accountId received in the read query!" ;
+           send server, eReadQueryResp, (accountId = query . accountId, balance = balance$Map[query . accountId]) ;
+         }
+       }
+  } .
+
+  --- Constants for function ReadBankBalance
+  op ReadBankBalance# : -> FunDecl .
+  op ReadBankBalance : -> Name .
+  eq ReadBankBalance# = fun ReadBankBalance(database : Database, accountId : int) : int {
+    var currentBalance : int ;
+    send database, eReadQuery, (accountId = accountId) ;
+    receive {
+      case eReadQueryResp : (resp : (accountId : int, balance : int)) {
+               currentBalance = resp . balance ;
+      }
+    }
+    return currentBalance ;
+  } .
+
+  --- Constants for function UpdateBankBalance
+  op UpdateBankBalance# : -> FunDecl .
+  op UpdateBankBalance : -> Name .
+  op accId : -> IntVarId .
+  op bal : -> IntVarId .
+  eq UpdateBankBalance# = fun UpdateBankBalance(database : Database, accId : int, bal : int) {
+    send database, eUpdateQuery, (accountId = accId, balance = bal) ;
+  } .
+
+  --- Constants for monitor BankBalanceIsAlwaysCorrect
+  op BankBalanceIsAlwaysCorrect# : -> SpecDecl .
+  op BankBalanceIsAlwaysCorrect : -> UserDefinedTypeName .
+  op BankBalanceIsAlwaysCorrect : -> Name .
+  op bankBalance : -> MapVarId .
+  op pendingWithDraws : -> MapVarId .
+  op WaitForWithDrawReqAndResp : -> Name .
+  op req : -> VarId .
+
+  eq BankBalanceIsAlwaysCorrect# = spec BankBalanceIsAlwaysCorrect observes eWithDrawReq, eWithDrawResp, eSpec-BankBalanceIsAlwaysCorrect-Init {
+       var bankBalance : map[int,int] ;
+       var pendingWithDraws : map[int,tWithDrawReq] ;
+
+       start state Init {
+         on eSpec-BankBalanceIsAlwaysCorrect-Init goto WaitForWithDrawReqAndResp with (balance$Map : map[int,int]) {
+           bankBalance = balance$Map ;
+        }
+       }
+
+       state WaitForWithDrawReqAndResp {
+         on eWithDrawReq do (req : tWithDrawReq) {
+           assert req . accountId in bankBalance, format("Unknown accountId {0} in the withdraw request. Valid accountIds = {1}", req . accountId, keys ( bankBalance )) ;
+           pendingWithDraws[req . rId] = req ;
+         }
+
+         on eWithDrawResp do (resp : tWithDrawResp) {
+           assert resp . accountId in bankBalance, format("Unknown accountId {0} in the withdraw response!", resp . accountId) ;
+           assert resp . rId in pendingWithDraws, format("Unknown rId {0} in the withdraw response!", resp . rId) ;
+           assert resp . balance >= 10, "Bank balance in all accounts must always be greater than or equal to 10!!" ;
+           if (resp . status == WITHDRAW-SUCCESS) {
+             assert resp . balance == bankBalance[resp . accountId] - pendingWithDraws[resp . rId] . amount, format("Bank balance for the account {0} is {1} and not the expected value {2}, Bank is lying!", resp . accountId, resp . balance, bankBalance[resp . accountId] - pendingWithDraws[resp . rId] . amount) ;
+             bankBalance[resp . accountId] = resp . balance ;
+           }
+           else{
+             assert bankBalance[resp . accountId] - pendingWithDraws[resp . rId] . amount < 10, format("Bank must accept the withdraw request for {0}, bank balance is {1}!", pendingWithDraws[resp . rId] . amount, bankBalance[resp . accountId]) ;
+             assert bankBalance[resp . accountId] == resp . balance, format("Withdraw failed BUT the account balance changed! actual: {0}, bank said: {1}", bankBalance[resp . accountId], resp . balance) ;
+           }
+         }
+       }
+  } .
+
+  --- Constants for monitor GuaranteedWithDrawProgress
+  op GuaranteedWithDrawProgress# : -> SpecDecl .
+  op GuaranteedWithDrawProgress : -> UserDefinedTypeName .
+  op GuaranteedWithDrawProgress : -> Name .
+  op pendingWDReqs : -> SetVarId .
+  op NopendingRequests : -> Name .
+  op PendingReqs : -> Name .
+
+  eq GuaranteedWithDrawProgress# = spec GuaranteedWithDrawProgress observes eWithDrawReq, eWithDrawResp {
+       var pendingWDReqs : set[int] ;
+
+       start state NopendingRequests {
+         on eWithDrawReq goto PendingReqs with (req : tWithDrawReq) {
+           pendingWDReqs += ( req . rId ) ;
+        }
+       }
+
+       hot state PendingReqs {
+         on eWithDrawResp do (resp : tWithDrawResp) {
+           assert resp . rId in pendingWDReqs, format("unexpected rId: {0} received, expected one of {1}", resp . rId, pendingWDReqs) ;
+           pendingWDReqs -= ( ( resp . rId ) ) ;
+           if (sizeof ( pendingWDReqs ) == 0) {
+             goto NopendingRequests ;
+           }
+         }
+
+         on eWithDrawReq goto PendingReqs with (req : tWithDrawReq) {
+           pendingWDReqs += ( req . rId ) ;
+        }
+       }
+  } .
+
+  --- Constants for machine TestWithSingleClient
+  op TestWithSingleClient# : -> MachineDecl .
+  op TestWithSingleClient : -> UserDefinedTypeName .
+  op TestWithSingleClient : -> Name .
+
+  eq TestWithSingleClient# = machine TestWithSingleClient {
+
+       start state Init {
+         entry {
+           SetupClientServerSystem(1) ;
+         }
+       }
+  } .
+
+  --- Constants for machine TestWithMultipleClients
+  op TestWithMultipleClients# : -> MachineDecl .
+  op TestWithMultipleClients : -> UserDefinedTypeName .
+  op TestWithMultipleClients : -> Name .
+
+  eq TestWithMultipleClients# = machine TestWithMultipleClients {
+
+       start state Init {
+         entry {
+           SetupClientServerSystem(choose ( 3 ) + 2) ;
+         }
+       }
+  } .
+
+  --- Constants for function CreateRandomInitialAccounts
+  op CreateRandomInitialAccounts# : -> FunDecl .
+  op CreateRandomInitialAccounts : -> Name .
+  op i : -> IntVarId .
+  op numAccounts : -> IntVarId .
+  eq CreateRandomInitialAccounts# = fun CreateRandomInitialAccounts(numAccounts : int) : map[int,int] {
+    var i : int ;
+    var bankBalance : map[int,int] ;
+    while (i < numAccounts) {
+      bankBalance[i] = choose ( 100 ) + 10 ;
+      i = i + 1 ;
+    }
+    return bankBalance ;
+  } .
+
+  --- Constants for function SetupClientServerSystem
+  op SetupClientServerSystem# : -> FunDecl .
+  op SetupClientServerSystem : -> Name .
+  op accountIds : -> SeqVarId .
+  op initAccBalance : -> MapVarId .
+  op numClients : -> IntVarId .
+  eq SetupClientServerSystem# = fun SetupClientServerSystem(numClients : int) {
+    var i : int ;
+    var server : BankServer ;
+    var accountIds : seq[int] ;
+    var initAccBalance : map[int,int] ;
+    initAccBalance = CreateRandomInitialAccounts(numClients) ;
+    server = new BankServer(initAccBalance) ;
+    announce eSpec-BankBalanceIsAlwaysCorrect-Init, initAccBalance ;
+    accountIds = keys ( initAccBalance ) ;
+    while (i < sizeof ( accountIds )) {
+      new Client((serv = server, accountId = accountIds[i], balance = initAccBalance[accountIds[i]])) ;
+      i = i + 1 ;
+    }
+  } .
+
+  --- Constants for test tcSingleClient
+  op tcSingleClient# : -> TestDecl .
+  op tcSingleClient : -> Name .
+  eq tcSingleClient# = test tcSingleClient [main = TestWithSingleClient] :
+    assert BankBalanceIsAlwaysCorrect, GuaranteedWithDrawProgress in ( union Client, Bank, { TestWithSingleClient } ) ; .
+
+  --- Constants for test tcMultipleClients
+  op tcMultipleClients# : -> TestDecl .
+  op tcMultipleClients : -> Name .
+  eq tcMultipleClients# = test tcMultipleClients [main = TestWithMultipleClients] :
+    assert BankBalanceIsAlwaysCorrect, GuaranteedWithDrawProgress in ( union Client, Bank, { TestWithMultipleClients } ) ; .
+
+  --- Constants for test tcSingleClientAbstractServer
+  op tcSingleClientAbstractServer# : -> TestDecl .
+  op tcSingleClientAbstractServer : -> Name .
+  eq tcSingleClientAbstractServer# = test tcSingleClientAbstractServer [main = TestWithSingleClient] :
+    assert BankBalanceIsAlwaysCorrect, GuaranteedWithDrawProgress in ( union Client, AbstractBank, { TestWithSingleClient } ) ; .
+endm
+
+mod CLIENT-SERVER-RUN is
+  inc CLIENT-SERVER .
+
+  op init : -> System .
+  eq init = init([AbstractBankServer#]
+                 [Client#]
+                 [BankServer#]
+                 [Database#]
+                 [TestWithSingleClient#]
+                 [TestWithMultipleClients#]
+                 [BankBalanceIsAlwaysCorrect#]
+                 [GuaranteedWithDrawProgress#]
+                 [ReadBankBalance#]
+                 [UpdateBankBalance#]
+                 [CreateRandomInitialAccounts#]
+                 [SetupClientServerSystem#]
+                 [tcSingleClient#]
+                 [tcMultipleClients#]
+                 [tcSingleClientAbstractServer#]) .
+endm

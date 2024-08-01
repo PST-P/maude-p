@@ -1,0 +1,9 @@
+./p2maude.sh BIKES /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude  ../../Bikes/ examples/other/bikes.maude
+./p2maude.sh CLIENT-SERVER /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude  examples/client-server/ examples/client-server/client-server.maude
+./p2maude.sh BIKES /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude examples/bikes/ examples/bikes/bikes.maude
+./p2maude.sh DICE /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude  ../../Dice/ examples/other/dice.maude
+./p2maude.sh TWO-PHASE /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude  ../../../p-multivesta/Tutorial/2_TwoPhaseCommit/ examples/other/twophase.maude
+./p2maude.sh TWO-PHASE /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude examples/two-phase/ examples/two-phase/twophase.maude
+./p2maude.sh EXPRESSO /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude examples/expresso-machine/ examples/expresso-machine/expresso.maude
+./p2maude.sh FAILURE /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude examples/failure-detector/ examples/failure-detector/failure.maude
+./p2maude.sh PRIORITY-QUEUE /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude examples/priority-queue/ examples/priority-queue/queue.maude

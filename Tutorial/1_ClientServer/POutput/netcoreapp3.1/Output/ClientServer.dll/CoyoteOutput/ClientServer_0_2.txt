@@ -1,0 +1,82 @@
+<TestLog> Running test 'PImplementation.tcSingleClient.Execute'.
+<CreateLog> BankBalanceIsAlwaysCorrect was created.
+<MonitorLog> BankBalanceIsAlwaysCorrect enters state 'Init_3'.
+<CreateLog> GuaranteedWithDrawProgress was created.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<CreateLog> Plang.CSharpRuntime._GodMachine(1) was created by task '2'.
+<CreateLog> PImplementation.TestWithSingleClient(2) was created by Plang.CSharpRuntime._GodMachine(1).
+<StateLog> PImplementation.TestWithSingleClient(2) enters state 'Init_4'.
+<CreateLog> BankServer(3) was created by PImplementation.TestWithSingleClient(2).
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eSpec_BankBalanceIsAlwaysCorrect_Init' in state 'Init_3'.
+<MonitorLog> BankBalanceIsAlwaysCorrect exits state 'Init_3'.
+<MonitorLog> BankBalanceIsAlwaysCorrect enters state 'WaitForWithDrawReqAndResp'.
+<StateLog> BankServer(3) enters state 'Init'.
+<CreateLog> Database(4) was created by BankServer(3).
+<GotoLog> BankServer(3) is transitioning from state 'Init' to state 'WaitForWithdrawRequests'.
+<StateLog> BankServer(3) exits state 'Init'.
+<StateLog> BankServer(3) enters state 'WaitForWithdrawRequests'.
+<CreateLog> Client(5) was created by PImplementation.TestWithSingleClient(2).
+<StateLog> Database(4) enters state 'Init_1'.
+<StateLog> Client(5) enters state 'Init_2'.
+<GotoLog> Client(5) is transitioning from state 'Init_2' to state 'WithdrawMoney'.
+<StateLog> Client(5) exits state 'Init_2'.
+<StateLog> Client(5) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<SendLog> 'Client(5)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(5), accountId:0, amount:39, rId:1, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(5), accountId:0, amount:39, rId:1, >)' in state 'WaitForWithdrawRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests' sent event 'eReadQuery with payload (<accountId:0, >)' to 'Database(4)'.
+<ReceiveLog> BankServer(3) is waiting to dequeue an event of type 'PImplementation.eReadQueryResp' or 'Plang.CSharpRuntime.PHalt' in state 'WaitForWithdrawRequests'.
+<DequeueLog> 'Database(4)' dequeued event 'eReadQuery with payload (<accountId:0, >)' in state 'Init_1'.
+<SendLog> 'Database(4)' in state 'Init_1' sent event 'eReadQueryResp with payload (<accountId:0, balance:102, >)' to 'BankServer(3)'.
+<ReceiveLog> 'BankServer(3)' dequeued event 'eReadQueryResp with payload (<accountId:0, balance:102, >)' and unblocked in state 'WaitForWithdrawRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests' sent event 'eUpdateQuery with payload (<accountId:0, balance:63, >)' to 'Database(4)'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawResp' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawResp' in state 'PendingReqs'.
+<MonitorLog> Monitor 'GuaranteedWithDrawProgress' raised event 'GotoStateEvent' in state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress exits hot state 'PendingReqs'.
+<MonitorLog> GuaranteedWithDrawProgress enters state 'NopendingRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests' sent event 'eWithDrawResp with payload (<status:0, accountId:0, balance:63, rId:1, >)' to 'Client(5)'.
+<DequeueLog> 'Client(5)' dequeued event 'eWithDrawResp with payload (<status:0, accountId:0, balance:63, rId:1, >)' in state 'WithdrawMoney'.
+<PrintLog> Withdrawal with rId = 1 succeeded, new account balance = 63
+<PrintLog> Still have account balance = 63, lets try and withdraw more
+<GotoLog> Client(5) is transitioning from state 'WithdrawMoney' to state 'WithdrawMoney'.
+<StateLog> Client(5) exits state 'WithdrawMoney'.
+<StateLog> Client(5) enters state 'WithdrawMoney'.
+<MonitorLog> PImplementation.BankBalanceIsAlwaysCorrect is processing event 'PImplementation.eWithDrawReq' in state 'WaitForWithDrawReqAndResp'.
+<MonitorLog> PImplementation.GuaranteedWithDrawProgress is processing event 'PImplementation.eWithDrawReq' in state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress exits state 'NopendingRequests'.
+<MonitorLog> GuaranteedWithDrawProgress enters hot state 'PendingReqs'.
+<DequeueLog> 'Database(4)' dequeued event 'eUpdateQuery with payload (<accountId:0, balance:63, >)' in state 'Init_1'.
+<SendLog> 'Client(5)' in state 'WithdrawMoney' sent event 'eWithDrawReq with payload (<source:Client(5), accountId:0, amount:10, rId:2, >)' to 'BankServer(3)'.
+<DequeueLog> 'BankServer(3)' dequeued event 'eWithDrawReq with payload (<source:Client(5), accountId:0, amount:10, rId:2, >)' in state 'WaitForWithdrawRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests' sent event 'eReadQuery with payload (<accountId:0, >)' to 'Database(4)'.
+<ReceiveLog> BankServer(3) is waiting to dequeue an event of type 'PImplementation.eReadQueryResp' or 'Plang.CSharpRuntime.PHalt' in state 'WaitForWithdrawRequests'.
+<DequeueLog> 'Database(4)' dequeued event 'eReadQuery with payload (<accountId:0, >)' in state 'Init_1'.
+<SendLog> 'Database(4)' in state 'Init_1' sent event 'eReadQueryResp with payload (<accountId:0, balance:63, >)' to 'BankServer(3)'.
+<ReceiveLog> 'BankServer(3)' dequeued event 'eReadQueryResp with payload (<accountId:0, balance:63, >)' and unblocked in state 'WaitForWithdrawRequests'.
+<SendLog> 'BankServer(3)' in state 'WaitForWithdrawRequests' sent event 'eUpdateQuery with payload (<accountId:0, balance:53, >)' to 'Database(4)'.
+<DequeueLog> 'Database(4)' dequeued event 'eUpdateQuery with payload (<accountId:0, balance:53, >)' in state 'Init_1'.
+<ErrorLog> PImplementation.GuaranteedWithDrawProgress detected liveness bug in hot state 'PendingReqs' at the end of program execution.
+<StackTrace>    at Microsoft.Coyote.SystematicTesting.OperationScheduler.NotifyAssertionFailure(String text, Boolean killTasks, Boolean cancelExecution)
+   at Microsoft.Coyote.SystematicTesting.ControlledRuntime.CheckNoMonitorInHotStateAtTermination()
+   at Microsoft.Coyote.SystematicTesting.TestingEngine.RunNextIteration(Int32 iteration)
+   at Microsoft.Coyote.SystematicTesting.TestingEngine.<CreateTestingTask>b__37_0()
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.Tasks.Task.<>c.<.cctor>b__274_0(Object obj)
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+   at System.Threading.Tasks.Task.ExecuteEntryUnsafe(Thread threadPoolThread)
+   at System.Threading.Tasks.Task.ExecuteFromThreadPool(Thread threadPoolThread)
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading._ThreadPoolWaitCallback.PerformWaitCallback()
+
+<StrategyLog> Found bug using 'random' strategy.
+<StrategyLog> Testing statistics:
+<StrategyLog> Found 1 bug.
+<StrategyLog> Scheduling statistics:
+<StrategyLog> Explored 1 schedule: 1 fair and 0 unfair.
+<StrategyLog> Found 100.00% buggy schedules.
+<StrategyLog> Number of scheduling points in fair terminating schedules: 33 (min), 33 (avg), 33 (max).

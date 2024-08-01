@@ -1,0 +1,3 @@
+load failure-detector.maude
+
+frew [1000] execute(TestFailureDetector, init) .

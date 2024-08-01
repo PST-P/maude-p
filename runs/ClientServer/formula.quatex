@@ -1,0 +1,9 @@
+
+// Number of steps until all clients in the NoMoneyToWithdraw state
+Steps() = if (s.rval("State |= all clients at NoMoneyToWithDraw"))
+          then s.rval("steps")
+          else # Steps() 
+          fi;
+
+eval E[Steps () ];
+

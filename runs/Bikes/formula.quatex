@@ -1,0 +1,36 @@
+BikeIsUsed(counter) =
+  if( s.rval("steps") > 50 )
+  then counter
+  else if ( s.rval("alive(id(14), State)") == 1 )
+       then if ( s.rval("state(id(14), Moving, State)") == 1 )
+            then # BikeIsUsed(counter + 1)
+            else if ( s.rval("state(id(14), Broken, State)") == 1 )
+                 then counter
+                 else # BikeIsUsed(counter)
+                 fi
+            fi
+       else # BikeIsUsed(counter)
+       fi
+  fi;
+
+eval E[ BikeIsUsed(0) ];
+eval parametric(E[ BikeIsUsed(x) ], x, 0.0, 20.0, 400.0);
+
+PercentageBikeUsed(counter) =
+  if ( s.rval("steps") > 50 )
+  then counter / s.rval("steps")
+  else if ( s.rval("alive(id(14), State)") == 1.0 )
+       then if ( ( s.rval("state(id(14), Moving, State)") +
+                   s.rval("state(id(14), Halted, State)") +
+                   s.rval("state(id(14), Parked, State)") ) > 0 )
+            then # PercentageBikeUsed(counter + 1)
+            else if ( s.rval("state(id(14), Broken, State)") == 1.0 )
+                 then counter / s.rval("steps")
+                 else # PercentageBikeUsed(counter)
+                 fi
+            fi
+       else # PercentageBikeUsed(counter)
+       fi
+  fi;
+
+ eval E[ PercentageBikeUsed(0) ];

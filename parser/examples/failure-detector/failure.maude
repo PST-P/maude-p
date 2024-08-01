@@ -1,0 +1,417 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module FAILURE
+---- 
+---- Located at examples/failure-detector/
+---- Date 2024-07-24 15:10:45.299728
+---- 
+--------------------------------------------------------------------
+
+load /home/calrare/Documentos/investigacion/aws/pst-p/maude/p-0.3.maude
+
+mod FAILURE is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tSystemConfig .
+  subsort tSystemConfig < UserDefinedType .
+  op tSystemConfig : -> UserDefinedTypeName .
+  op numNodes : -> IntVarId .
+  op numClients : -> IntVarId .
+  op tSystemConfig : Int Int -> tSystemConfig .
+
+  --- Constants for event declarations
+  op ePing : -> EventName .
+  op fd : -> MachVarId .
+  op trial : -> IntVarId .
+  op ePong : -> EventName .
+  op node : -> MachVarId .
+  op eNotifyNodesDown : -> EventName .
+  op eDelayNodeFailure : -> EventName .
+  op eShutDown : -> EventName .
+  op eStartTimer : -> EventName .
+  op eCancelTimer : -> EventName .
+  op eTimeOut : -> EventName .
+  op eDelayedTimeOut : -> EventName .
+
+  --- Constants for machine Client
+  op Client# : -> MachineDecl .
+  op Client : -> UserDefinedTypeName .
+  op Client : -> Name .
+  op myViewOfAliveNodes : -> SetVarId .
+  op Init : -> Name .
+  op nodes : -> SetVarId .
+  op dead_nodes : -> SetVarId .
+  op i : -> IntVarId .
+
+  eq Client# = machine Client {
+       var myViewOfAliveNodes : set[Node] ;
+
+       start state Init {
+         entry (nodes : set[Node]) {
+           myViewOfAliveNodes = nodes ;
+         }
+
+         on eNotifyNodesDown do (dead-nodes : set[Node]) {
+           var i : int ;
+           print format("Nodes {0} are down!", dead-nodes) ;
+           while (i < sizeof ( dead-nodes )) {
+             myViewOfAliveNodes -= ( ( dead-nodes[i] ) ) ;
+             i = i + 1 ;
+           }
+         }
+       }
+  } .
+
+  --- Constants for machine FailureDetector
+  op FailureDetector# : -> MachineDecl .
+  op FailureDetector : -> UserDefinedTypeName .
+  op FailureDetector : -> Name .
+  op clients : -> SetVarId .
+  op attempts : -> IntVarId .
+  op alive : -> SetVarId .
+  op respInCurrRound : -> SetVarId .
+  op timer : -> MachVarId .
+  op SendPingsToAllNodes : -> Name .
+  op ResetAndStartAgain : -> Name .
+  op PotentiallyDownNodes# : -> FunDecl .
+  op PotentiallyDownNodes : -> Name .
+  op ComputeNodesDownAndUpdateAliveSet# : -> FunDecl .
+  op ComputeNodesDownAndUpdateAliveSet : -> Name .
+  op config : -> VarId .
+  op notRespondedNodes : -> SetVarId .
+  op pong : -> VarId .
+  op nodesDown : -> SetVarId .
+  op nodesNotResponded : -> SetVarId .
+
+  eq FailureDetector# = machine FailureDetector {
+       var nodes : set[Node] ;
+       var clients : set[Client] ;
+       var attempts : int ;
+       var alive : set[Node] ;
+       var respInCurrRound : set[machine] ;
+       var timer : Timer ;
+
+       start state Init {
+         entry (config : (nodes : set[Node], clients : set[Client])) {
+           nodes = config . nodes ;
+           alive = config . nodes ;
+           clients = config . clients ;
+           timer = CreateTimer(this) ;
+           goto SendPingsToAllNodes ;
+         }
+       }
+
+       state SendPingsToAllNodes {
+         entry {
+           var notRespondedNodes : set[Node] ;
+           if (sizeof ( alive ) == 0) {
+             raise halt ;
+           }
+           notRespondedNodes = PotentiallyDownNodes() ;
+           UnReliableBroadCast(notRespondedNodes, ePing, ( fd = this, trial = attempts )) ;
+           StartTimer(timer) ;
+         }
+
+         on ePong do (pong : (node : Node, trial : int)) {
+           if (pong . node in alive) {
+             respInCurrRound += ( pong . node ) ;
+             if (sizeof ( respInCurrRound ) == sizeof ( alive )) {
+               CancelTimer(timer) ;
+               goto ResetAndStartAgain ;
+             }
+           }
+         }
+
+         on eTimeOut do {
+           var nodesDown : set[Node] ;
+           attempts = attempts + 1 ;
+           if (sizeof ( respInCurrRound ) < sizeof ( alive )) {
+             if (attempts < 3) {
+               goto SendPingsToAllNodes ;
+             }
+             else{
+               nodesDown = ComputeNodesDownAndUpdateAliveSet() ;
+               ReliableBroadCast(clients, eNotifyNodesDown, nodesDown) ;
+             }
+           }
+           goto ResetAndStartAgain ;
+         }
+       }
+
+       state ResetAndStartAgain {
+         entry {
+           attempts = 0 ;
+           respInCurrRound = default ( set[Node] ) ;
+           StartTimer(timer) ;
+         }
+
+         on eTimeOut goto SendPingsToAllNodes ;
+
+         ignore ePong ;
+       }
+       fun PotentiallyDownNodes () : set[Node] {
+         var i : int ;
+         var nodesNotResponded : set[Node] ;
+         while (i < sizeof ( nodes )) {
+           if (nodes[i] in alive && ! ( nodes[i] in respInCurrRound )) {
+             nodesNotResponded += ( nodes[i] ) ;
+           }
+           i = i + 1 ;
+         }
+         return nodesNotResponded ;
+       }
+
+       fun ComputeNodesDownAndUpdateAliveSet () : set[Node] {
+         var i : int ;
+         var nodesDown : set[Node] ;
+         while (i < sizeof ( nodes )) {
+           if (nodes[i] in alive && ! ( nodes[i] in respInCurrRound )) {
+             alive -= ( ( nodes[i] ) ) ;
+             nodesDown += ( nodes[i] ) ;
+           }
+           i = i + 1 ;
+         }
+         return nodesDown ;
+       }
+
+  } .
+
+  --- Constants for machine FailureInjector
+  op FailureInjector# : -> MachineDecl .
+  op FailureInjector : -> UserDefinedTypeName .
+  op FailureInjector : -> Name .
+  op nFailures : -> IntVarId .
+  op FailOneNode : -> Name .
+  op fail : -> MachVarId .
+
+  eq FailureInjector# = machine FailureInjector {
+       var nFailures : int ;
+       var nodes : set[machine] ;
+
+       start state Init {
+         entry (config : (nodes : set[machine], nFailures : int)) {
+           nFailures = config . nFailures ;
+           nodes = config . nodes ;
+           assert nFailures < sizeof ( nodes ), "" ;
+           goto FailOneNode ;
+         }
+       }
+
+       state FailOneNode {
+         entry {
+           var fail : machine ;
+           if (nFailures == 0) {
+             raise halt ;
+           }
+           else{
+             if ($) {
+               fail = choose ( nodes ) ;
+               send fail, eShutDown, fail ;
+               nodes -= ( ( fail ) ) ;
+               nFailures = nFailures - 1 ;
+             }
+             else{
+               send this, eDelayNodeFailure ;
+             }
+           }
+         }
+
+         on eDelayNodeFailure goto FailOneNode ;
+       }
+  } .
+
+  --- Constants for function CreateFailureInjector
+  op CreateFailureInjector# : -> FunDecl .
+  op CreateFailureInjector : -> Name .
+  eq CreateFailureInjector# = fun CreateFailureInjector(config : (nodes : set[machine], nFailures : int)) {
+    new FailureInjector(config) ;
+  } .
+
+  --- Constants for module FailureInjector
+  op FailureInjector : -> Name .
+  --- module FailureInjector = { FailureInjector } ; .
+
+  --- Constants for function UnReliableSend
+  op UnReliableSend# : -> FunDecl .
+  op UnReliableSend : -> Name .
+  op target : -> MachVarId .
+  op message : -> VarId .
+  op payload : -> VarId .
+  eq UnReliableSend# = fun UnReliableSend(target : machine, message : event, payload : any) {
+    if ($) {
+      send target, message, payload ;
+    }
+  } .
+
+  --- Constants for function UnReliableBroadCast
+  op UnReliableBroadCast# : -> FunDecl .
+  op UnReliableBroadCast : -> Name .
+  op ms : -> SetVarId .
+  op ev : -> VarId .
+  eq UnReliableBroadCast# = fun UnReliableBroadCast(ms : set[machine], ev : event, payload : any) {
+    var i : int ;
+    while (i < sizeof ( ms )) {
+      UnReliableSend(ms[i], ev, payload) ;
+      i = i + 1 ;
+    }
+  } .
+
+  --- Constants for function ReliableBroadCast
+  op ReliableBroadCast# : -> FunDecl .
+  op ReliableBroadCast : -> Name .
+  eq ReliableBroadCast# = fun ReliableBroadCast(ms : set[machine], ev : event, payload : any) {
+    var i : int ;
+    while (i < sizeof ( ms )) {
+      send ms[i], ev, payload ;
+      i = i + 1 ;
+    }
+  } .
+
+  --- Constants for machine Node
+  op Node# : -> MachineDecl .
+  op Node : -> UserDefinedTypeName .
+  op Node : -> Name .
+  op WaitForPing : -> Name .
+  op req : -> VarId .
+
+  eq Node# = machine Node {
+
+       start state WaitForPing {
+         on ePing do (req : (fd : FailureDetector, trial : int)) {
+           UnReliableSend(req . fd, ePong, ( node = this, trial = req . trial )) ;
+         }
+
+         on eShutDown do {
+           raise halt ;
+         }
+       }
+  } .
+
+  --- Constants for machine Timer
+  op Timer# : -> MachineDecl .
+  op Timer : -> UserDefinedTypeName .
+  op Timer : -> Name .
+  op client : -> MachVarId .
+  op WaitForTimerRequests : -> Name .
+  op TimerStarted : -> Name .
+  op clientt : -> MachVarId .
+
+  eq Timer# = machine Timer {
+       var client : machine ;
+
+       start state Init {
+         entry (clientt : machine) {
+           client = clientt ;
+           goto WaitForTimerRequests ;
+         }
+       }
+
+       state WaitForTimerRequests {
+         on eStartTimer goto TimerStarted ;
+
+         ignore eCancelTimer, eDelayedTimeOut ;
+       }
+
+       state TimerStarted {
+         defer eStartTimer ;
+
+         entry {
+           if ($) {
+             send client, eTimeOut ;
+             goto WaitForTimerRequests ;
+           }
+           else{
+             send this, eDelayedTimeOut ;
+           }
+         }
+
+         on eDelayedTimeOut goto TimerStarted ;
+
+         on eCancelTimer goto WaitForTimerRequests ;
+       }
+  } .
+
+  --- Constants for function CreateTimer
+  op CreateTimer# : -> FunDecl .
+  op CreateTimer : -> Name .
+  eq CreateTimer# = fun CreateTimer(client : machine) : Timer {
+    return new Timer(client) ;
+  } .
+
+  --- Constants for function StartTimer
+  op StartTimer# : -> FunDecl .
+  op StartTimer : -> Name .
+  eq StartTimer# = fun StartTimer(timer : Timer) {
+    send timer, eStartTimer ;
+  } .
+
+  --- Constants for function CancelTimer
+  op CancelTimer# : -> FunDecl .
+  op CancelTimer : -> Name .
+  eq CancelTimer# = fun CancelTimer(timer : Timer) {
+    send timer, eCancelTimer ;
+  } .
+
+  --- Constants for machine TestMultipleClients
+  op TestMultipleClients# : -> MachineDecl .
+  op TestMultipleClients : -> UserDefinedTypeName .
+  op TestMultipleClients : -> Name .
+
+  eq TestMultipleClients# = machine TestMultipleClients {
+
+       start state Init {
+         entry {
+           var config : tSystemConfig ;
+           config = ( numNodes = 3, numClients = 2 ) ;
+           SetupSystemWithFailureInjector(config) ;
+         }
+       }
+  } .
+
+  --- Constants for function SetupSystemWithFailureInjector
+  op SetupSystemWithFailureInjector# : -> FunDecl .
+  op SetupSystemWithFailureInjector : -> Name .
+  eq SetupSystemWithFailureInjector# = fun SetupSystemWithFailureInjector(config : tSystemConfig) {
+    var i : int ;
+    var nodes : set[Node] ;
+    var clients : set[Client] ;
+    while (i < config . numNodes) {
+      nodes += ( new Node ( ) ) ;
+      i = i + 1 ;
+    }
+    i = 0 ;
+    while (i < config . numClients) {
+      clients += ( new Client(nodes) ) ;
+      i = i + 1 ;
+    }
+    new FailureDetector((nodes = nodes, clients = clients)) ;
+    new FailureInjector((nodes = nodes, nFailures = sizeof ( nodes ) / 2 + 1)) ;
+  } .
+
+  --- Constants for test TestFailureDetector
+  op TestFailureDetector# : -> TestDecl .
+  op TestFailureDetector : -> Name .
+  eq TestFailureDetector# = test TestFailureDetector [main = TestMultipleClients] :
+    assert ReliableFailureDetector in union { TestMultipleClients }, FailureDetector, FailureInjector ; .
+endm
+
+mod FAILURE-RUN is
+  inc FAILURE .
+
+  op init : -> System .
+  eq init = init([Client#]
+                 [FailureDetector#]
+                 [FailureInjector#]
+                 [Node#]
+                 [Timer#]
+                 [TestMultipleClients#]
+                 [CreateFailureInjector#]
+                 [UnReliableSend#]
+                 [UnReliableBroadCast#]
+                 [ReliableBroadCast#]
+                 [CreateTimer#]
+                 [StartTimer#]
+                 [CancelTimer#]
+                 [SetupSystemWithFailureInjector#]
+                 [TestFailureDetector#]) .
+endm

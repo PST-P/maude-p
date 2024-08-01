@@ -1,0 +1,259 @@
+-------------------------------------------------------------
+---- Maude Code Generated for Module BIKES
+-------------------------------------------------------------
+
+load ../../p-0.3.maude 
+
+mod BIKES is
+  inc SYSTEM-EXEC .
+
+  --- Constants for event declarations
+  op sell : -> EventName .
+  op maintain : -> EventName .
+  op light : -> EventName .
+  op music : -> EventName .
+  op stop : -> EventName .
+  op ostart : -> EventName .
+  op gps : -> EventName .
+  op guideApp : -> EventName .
+  op naviApp : -> EventName .
+  op assistance : -> EventName .
+  op dump : -> EventName .
+  op install : -> EventName .
+  op piece : -> StringVarId .
+  op price : -> FloatVarId .
+  op weight : -> FloatVarId .
+  op load : -> FloatVarId .
+  op uninstall : -> EventName .
+  op pieceOld : -> IntVarId .
+  op replace : -> EventName .
+  op pieceOld$String : -> StringVarId .
+  op priceOld : -> FloatVarId .
+  op weightOld : -> FloatVarId .
+  op loadOld : -> FloatVarId .
+  op pieceNew : -> StringVarId .
+  op priceNew : -> FloatVarId .
+  op weightNew : -> FloatVarId .
+  op loadNew : -> FloatVarId .
+  op deploy : -> EventName .
+  op book : -> EventName .
+  op obreak : -> EventName .
+  op park : -> EventName .
+  op bike : -> EventName .
+
+  --- Constants for machine Bike
+  op Bike# : -> MachineDecl .
+  op Bike : -> UserDefinedTypeName .
+  op Bike : -> Name .
+  op pieces : -> SetVarId .
+  op light$Bool : -> BoolVarId .
+  op music$Bool : -> BoolVarId .
+  op gps$Bool : -> BoolVarId .
+  op guideApp$Bool : -> BoolVarId .
+  op naviApp$Bool : -> BoolVarId .
+  op maxPrice : -> FloatVarId .
+  op initialPrice$String : -> StringVarId .
+  op Init : -> Name .
+  op Factory : -> Name .
+  op Deposit : -> Name .
+  op Parked : -> Name .
+  op Moving : -> Name .
+  op Halted : -> Name .
+  op Broken : -> Name .
+  op Trash : -> Name .
+  op input : -> VarId .
+  op initialPrice : -> BoolVarId .
+  op initialWeight : -> FloatVarId .
+  op initialLoad : -> FloatVarId .
+  op initialPrice$Float : -> FloatVarId .
+  op price$Int : -> IntVarId .
+  op b : -> MachVarId .
+  op bikes : -> FloatVarId .
+  op numBikes : -> FloatVarId .
+  op u : -> MachVarId .
+
+  eq Bike# = machine Bike {
+       var pieces : set[string] ;
+       var price : float ;
+       var weight : float ;
+       var load : float ;
+       var light$Bool : bool ;
+       var music$Bool : bool ;
+       var gps$Bool : bool ;
+       var guideApp$Bool : bool ;
+       var naviApp$Bool : bool ;
+       var maxPrice : float ;
+       var initialPrice$String : string ;
+
+       start state Init {
+         entry (input : (initialPrice : bool, initialWeight : float, initialLoad : float)) {
+           goto Factory, input ;
+           initialPrice$String = input . initialPrice ;
+         }
+
+       }
+
+       hot state Factory {
+         entry (input : (initialPrice$Float : float, initialWeight : float, initialLoad : float)) {
+           var price$Int : int ;
+           price$Int = input . initialPrice$Float ;
+           weight = input . initialWeight ;
+           load = input . initialLoad ;
+           light$Bool = false ;
+           music$Bool = false ;
+           gps$Bool = false ;
+           guideApp$Bool = false ;
+           naviApp$Bool = false ;
+         }
+
+         on install, replace do (input : (piece : string, price : float, weight : float, load : float)) {
+           pieces += ( input . piece ) ;
+           price = price + input . price ;
+           weight = weight + input . weight ;
+           load = load + input . load ;
+         }
+
+         on deploy do (b : Bike) {
+           var bikes : float ;
+           var numBikes : float ;
+           bikes += ( numBikes, b ) ;
+           numBikes = numBikes + 1 ;
+         }
+
+         on replace do (input : (pieceOld$String : string, priceOld : float, weightOld : float, loadOld : float, pieceNew : string, priceNew : float, weightNew : float, loadNew : float)) {
+           pieces -= ( input . pieceOld$String ) ;
+           pieces += ( input . pieceNew ) ;
+           price = price - input . priceOld + input . priceNew ;
+           weight = weight - input . weightOld + input . weightNew ;
+           load = load - input . loadOld + input . loadNew ;
+         }
+
+         on sell do {
+           goto Deposit ;
+         }
+
+       }
+
+       hot state Deposit {
+         on install do (input : (piece : string, price : float, weight : float, load : float)) {
+           price = price + input . price ;
+           weight = weight + input . weight ;
+           load = load + input . load ;
+           pieces += ( input . piece ) ;
+         }
+
+         on uninstall do (input : (piece : string, price : float, weight : float, load : float)) {
+           price = price - input . price ;
+           weight = weight - input . weight ;
+           load = load - input . load ;
+           pieces -= ( ( input . piece ) ) ;
+         }
+
+         on replace do (input : (pieceOld$String : string, priceOld : float, weightOld : float, loadOld : float, pieceNew : string, priceNew : float, weightNew : float, loadNew : float)) {
+           price = price - input . priceOld + input . priceNew ;
+           weight = weight - input . weightOld + input . weightNew ;
+           load = load - input . loadOld + input . loadNew ;
+           pieces -= ( ( input . pieceOld$String ) ) ;
+           pieces += ( input . pieceNew ) ;
+         }
+
+         on deploy do {
+           goto Parked ;
+         }
+
+       }
+
+       hot state Parked {
+         on maintain do {
+           goto Deposit ;
+         }
+
+         on book do (u : User) {
+           send u, bike, this ;
+           goto Moving ;
+         }
+
+       }
+
+       hot state Moving {
+         on light do {
+           light$Bool = ! light$Bool ;
+         }
+
+         on music do {
+           music$Bool = ! music$Bool ;
+         }
+
+         on stop do {
+           goto Halted ;
+         }
+
+         on obreak do {
+           goto Broken ;
+         }
+
+       }
+
+       hot state Halted {
+         on ostart do {
+           goto Moving ;
+         }
+
+         on light do {
+           light$Bool = ! light$Bool ;
+         }
+
+         on music do {
+           music$Bool = ! music$Bool ;
+         }
+
+         on gps do {
+           gps$Bool = ! gps$Bool ;
+         }
+
+         on guideApp do {
+           guideApp$Bool = ! guideApp$Bool ;
+         }
+
+         on naviApp do {
+           naviApp$Bool = ! naviApp$Bool ;
+         }
+
+         on park do {
+           goto Parked ;
+         }
+
+         on obreak do {
+           goto Broken ;
+         }
+
+       }
+
+       hot state Broken {
+         on assistance do {
+           goto Deposit ;
+         }
+
+         on dump do {
+           goto Trash ;
+         }
+
+       }
+
+       state Trash {
+         entry {
+         }
+
+       }
+  } .
+
+  --- Constants for machine User
+  op User# : -> MachineDecl .
+  op User : -> UserDefinedTypeName .
+  op User : -> Name .
+  op bike$Mach : -> MachVarId .
+
+  eq User# = machine User {
+       var bike$Mach : Bike ;
+  } .
+endm
