@@ -6,9 +6,9 @@
 
 [The P Tutorial](https://p-org.github.io/P/tutsoutline/)
 
-Interesting note from the way of specificying [test cases](https://p-org.github.io/P/manual/testcases/):
+<!--    Interesting note from the way of specificying [test cases](https://p-org.github.io/P/manual/testcases/):
 
-<!--    For each testcase, the P checker by default asserts that for each execution of the system (i.e., module_under_test): (1) there are no unhandled event exceptions; (2) all local assertions in the program hold; (3) there are no deadlocks; and finally (4) based on the specification monitors that are attached to the module, these safety and liveness properties asserted by the monitors always hold.-->
+For each testcase, the P checker by default asserts that for each execution of the system (i.e., module_under_test): (1) there are no unhandled event exceptions; (2) all local assertions in the program hold; (3) there are no deadlocks; and finally (4) based on the specification monitors that are attached to the module, these safety and liveness properties asserted by the monitors always hold.-->
 
 # How to execute the compiler
 
