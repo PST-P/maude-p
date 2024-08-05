@@ -1,0 +1,4 @@
+load dice.maude
+
+frew execute(tThrow, init) .
+frew execute(tNThrows, init) .

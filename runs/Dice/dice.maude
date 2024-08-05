@@ -1,0 +1,282 @@
+--------------------------------------------------------------------
+---- Maude Code Generated for Module DICE
+---- 
+---- Located at ../../Dice/
+---- Date 2024-08-05 14:47:47.865830
+---- 
+--------------------------------------------------------------------
+
+load ../../p-0.5.maude
+
+mod DICE is
+  inc SYSTEM-EXEC .
+
+  --- Constants for type declarations
+  sort tObserver .
+  subsort tObserver < UserDefinedType .
+  op tObserver : -> UserDefinedTypeName .
+
+  --- Constants for event declarations
+  op oneStep : -> EventName .
+  op throw : -> EventName .
+  op done : -> EventName .
+
+  --- Constants for machine Dice
+  op Dice# : -> MachineDecl .
+  op Dice : -> UserDefinedTypeName .
+  op Dice : -> Name .
+  op faces : -> MapVarId .
+  op nOfFaces : -> IntVarId .
+  op i : -> IntVarId .
+  op Init : -> Name .
+  op Throw : -> Name .
+
+  eq Dice# = machine Dice {
+       var faces : map[int,int] ;
+       var nOfFaces : int ;
+       var i : int ;
+
+       start state Init {
+         entry {
+           nOfFaces = 6 ;
+           i = 1 ;
+           while (i <= nOfFaces) {
+             faces[i] = 0 ;
+             i = i + 1 ;
+           }
+           goto Throw ;
+         }
+       }
+
+       state Throw {
+         on oneStep do {
+           i = choose ( nOfFaces ) + 1 ;
+           faces[i] = faces[i] + 1 ;
+         }
+       }
+  } .
+
+  --- Constants for machine Dice2
+  op Dice2# : -> MachineDecl .
+  op Dice2 : -> UserDefinedTypeName .
+  op Dice2 : -> Name .
+  op lastFace : -> IntVarId .
+  op Active : -> Name .
+  op sender : -> MachVarId .
+
+  eq Dice2# = machine Dice2 {
+       var faces : map[int,int] ;
+       var nOfFaces : int ;
+       var lastFace : int ;
+
+       start state Init {
+         entry {
+           var i : int ;
+           nOfFaces = 6 ;
+           i = 1 ;
+           while (i <= nOfFaces) {
+             faces[i] = 0 ;
+             i = i + 1 ;
+           }
+           goto Active ;
+         }
+       }
+
+       state Active {
+         entry {
+         }
+
+         on throw do (sender : TestSingleThrow) {
+           lastFace = choose ( nOfFaces ) + 1 ;
+           faces[lastFace] = faces[lastFace] + 1 ;
+           send sender, done ;
+           goto Active ;
+         }
+       }
+  } .
+
+  --- Constants for module Dice
+  op Dice : -> Name .
+  --- module Dice = { Dice } ; .
+
+  --- Constants for module Dice2
+  op Dice2 : -> Name .
+  --- module Dice2 = { Dice2 } ; .
+
+  --- Constants for function Decode
+  op Decode# : -> FunDecl .
+  op Decode : -> Name .
+  op o : -> VarId .
+  eq Decode# = fun Decode(o : any) : string ; .
+
+  --- Constants for function AddMachine
+  op AddMachine# : -> FunDecl .
+  op AddMachine : -> Name .
+  op name : -> StringVarId .
+  eq AddMachine# = fun AddMachine(name : string) ; .
+
+  --- Constants for function GetInfo
+  op GetInfo# : -> FunDecl .
+  op GetInfo : -> Name .
+  eq GetInfo# = fun GetInfo() : any ; .
+
+  --- Constants for test tThrow
+  op tThrow# : -> TestDecl .
+  op tThrow : -> Name .
+  eq tThrow# = test tThrow [main = TestSingleThrow] :
+    union Dice, { TestSingleThrow } ; .
+
+  --- Constants for test tNThrows
+  op tNThrows# : -> TestDecl .
+  op tNThrows : -> Name .
+  eq tNThrows# = test tNThrows [main = TestNThrows] :
+    union Dice, { TestNThrows } ; .
+
+  --- Constants for test tThrow2
+  op tThrow2# : -> TestDecl .
+  op tThrow2 : -> Name .
+  eq tThrow2# = test tThrow2 [main = TestSingleThrow2] :
+    union Dice2, { TestSingleThrow2 } ; .
+
+  --- Constants for test tNThrows2
+  op tNThrows2# : -> TestDecl .
+  op tNThrows2 : -> Name .
+  eq tNThrows2# = test tNThrows2 [main = TestNThrows2] :
+    union Dice2, { TestNThrows2 } ; .
+
+  --- Constants for machine TestSingleThrow
+  op TestSingleThrow# : -> MachineDecl .
+  op TestSingleThrow : -> UserDefinedTypeName .
+  op TestSingleThrow : -> Name .
+  op dice : -> MachVarId .
+
+  eq TestSingleThrow# = machine TestSingleThrow {
+
+       start state Init {
+         entry {
+           var dice : Dice ;
+           dice = new Dice ( ) ;
+           send dice, oneStep ;
+         }
+       }
+  } .
+
+  --- Constants for machine TestNThrows
+  op TestNThrows# : -> MachineDecl .
+  op TestNThrows : -> UserDefinedTypeName .
+  op TestNThrows : -> Name .
+  op nThrows : -> IntVarId .
+
+  eq TestNThrows# = machine TestNThrows {
+
+       start state Init {
+         entry {
+           var dice : Dice ;
+           var nThrows : int ;
+           dice = new Dice ( ) ;
+           nThrows = 1000 ;
+           while (nThrows > 0) {
+             send dice, oneStep ;
+             nThrows = nThrows - 1 ;
+           }
+         }
+       }
+  } .
+
+  --- Constants for machine TestSingleThrow2
+  op TestSingleThrow2# : -> MachineDecl .
+  op TestSingleThrow2 : -> UserDefinedTypeName .
+  op TestSingleThrow2 : -> Name .
+  op Play : -> Name .
+  op Over : -> Name .
+
+  eq TestSingleThrow2# = machine TestSingleThrow2 {
+       var dice : Dice2 ;
+
+       start state Init {
+         entry {
+           dice = new Dice2 ( ) ;
+           goto Play ;
+         }
+       }
+
+       state Play {
+         entry {
+           send dice, throw, this ;
+           goto Over ;
+         }
+       }
+
+       state Over {
+         on done do {
+           goto Over ;
+         }
+       }
+  } .
+
+  --- Constants for machine TestNThrows2
+  op TestNThrows2# : -> MachineDecl .
+  op TestNThrows2 : -> UserDefinedTypeName .
+  op TestNThrows2 : -> Name .
+  op Wait : -> Name .
+
+  eq TestNThrows2# = machine TestNThrows2 {
+       var dice : Dice2 ;
+       var nThrows : int ;
+
+       start state Init {
+         entry {
+           dice = new Dice2 ( ) ;
+           nThrows = 1000 ;
+           goto Play ;
+         }
+       }
+
+       state Play {
+         entry {
+           if (nThrows > 0) {
+             send dice, throw, this ;
+             nThrows = nThrows - 1 ;
+             goto Wait ;
+           }
+           else{
+             goto Over ;
+           }
+         }
+       }
+
+       state Wait {
+         entry {
+         }
+
+         on done do {
+           goto Play ;
+         }
+       }
+
+       state Over {
+         on done do {
+           goto Over ;
+         }
+       }
+  } .
+endm
+
+mod DICE-RUN is
+  inc DICE .
+
+  op init : -> System .
+  eq init = init([Dice#]
+                 [Dice2#]
+                 [TestSingleThrow#]
+                 [TestNThrows#]
+                 [TestSingleThrow2#]
+                 [TestNThrows2#]
+                 [Decode#]
+                 [AddMachine#]
+                 [GetInfo#]
+                 [tThrow#]
+                 [tNThrows#]
+                 [tThrow2#]
+                 [tNThrows2#]) .
+endm

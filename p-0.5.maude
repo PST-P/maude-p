@@ -677,10 +677,14 @@ mod SYNTAX-MACHINE is
   ---- State Declaration in P
   sorts StateDecl StateType .
   ops hot cold : -> StateType .
+  op state_{} : Name -> StateDecl .
   op state_{_} : Name StateBodyItem* -> StateDecl .
+  op _state_{} : StateType Name -> StateDecl .
   op _state_{_} : StateType Name StateBodyItem* -> StateDecl .
   op start state_{_} : Name StateBodyItem* -> StateDecl .
   op start_state_{_} : StateType Name StateBodyItem* -> StateDecl .
+  op start state_{} : Name -> StateDecl .
+  op start_state_{} : StateType Name -> StateDecl .
   
   ---- State Body
   ---- TODO: handle other state bodies
@@ -814,10 +818,16 @@ mod MACHINE is
     = parse(ME*, [Id, Id?, States, Functions, DEs, IEs, Memory [Q -> noValue]]) 
       [owise] .
 
+  eq parse(StT state Id { } ME*, [Id', Id'', States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id', Id'', insert(Id, parse(skip), States), Functions, DEs, IEs, Memory]) .
   eq parse(StT state Id { Items } ME*, [Id', Id'', States, Functions, DEs, IEs, Memory]) 
     = parse(ME*, [Id', Id'', insert(Id, parse(Items), States), Functions, DEs, IEs, Memory]) .
+  eq parse(state Id { } ME*, [Id', Id'', States, Functions, DEs, IEs, Memory]) 
+    = parse(ME*, [Id', Id'', insert(Id, parse(skip), States), Functions, DEs, IEs, Memory]) .
   eq parse(state Id { Items } ME*, [Id', Id'', States, Functions, DEs, IEs, Memory]) 
     = parse(ME*, [Id', Id'', insert(Id, parse(Items), States), Functions, DEs, IEs, Memory]) .
+  eq parse(start state Id { } ME*, [Id', noValue, States, Functions, DEs, IEs, Memory]) ---- TODO: check
+    = parse(ME*, [Id', Id, insert(Id, parse(skip), States), Functions, DEs, IEs, Memory]) .
   eq parse(start state Id { Items } ME*, [Id', noValue, States, Functions, DEs, IEs, Memory]) ---- TODO: check
     = parse(ME*, [Id', Id, insert(Id, parse(Items), States), Functions, DEs, IEs, Memory]) .
   eq parse(skip, [Id, Id', States, Functions, DEs, IEs, Memory]) = [Id, Id', States, Functions, DEs, IEs, Memory] .
@@ -1554,13 +1564,13 @@ mod SYSTEM-EXEC is
    = [[MId, Id, St, Events, Events', Code <<| CS, FS, setMach(MVId, MId', MS)] ES, S, Sys, Log] .
 )
 
-  ---- _+=_
+  ---- _+=_ sets
   eq [+assignment] : 
-     [[MId, Id, St, Events, Events', VId += E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
-   = [[MId, Id, St, Events, Events', eval(E) <| VId += @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
+     [[MId, Id, St, Events, Events', SetV += E ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log]
+   = [[MId, Id, St, Events, Events', eval(E) <| SetV += @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] .
   eq [+assignment] :
-     [[MId, Id, St, Events, Events', result(E) <| VId += @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
-   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, insertS(VId, E, MS)] ES, S, Sys, Log] .
+     [[MId, Id, St, Events, Events', result(E) <| SetV += @ ; Code <<| CS, FS, DEs, IEs, MS] ES, S, Sys, Log] 
+   = [[MId, Id, St, Events, Events', Code <<| CS, FS, DEs, IEs, insertS(SetV, E, MS)] ES, S, Sys, Log] .
 
   ---- _+=(_,_)
   eq [+assignment] : 

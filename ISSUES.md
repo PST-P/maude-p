@@ -111,3 +111,5 @@ Line 176 of the `CoffeMakerControlPanel.p` file is
   ~~~~
 
 - The `SimplePaxos` project does not compile. It possible doesn't compile in the P compiler either. In the state `ProposerPhaseOne` of the `Proposer` machine there is a `on eAgree do (proposal: tAgree)` when the type `tAgree` has not been defined anywhere. 
+
+- +=, -=, *=, /= not supported (for numbers, += is supported for maps, sets and seqs)

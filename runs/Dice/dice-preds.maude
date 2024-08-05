@@ -1,0 +1,93 @@
+sload dice.maude 
+sload model-checker 
+
+mod DICE-PREDS is
+  inc DICE-RUN .
+  inc SATISFACTION .
+  subsort SystemExecState < State .
+  op face : Nat -> Prop .
+  op state : Name Name -> Prop .
+  var  MId : MachId .
+  vars Events Events' : Queue{Event} .
+  var  CS : CodeStack .
+  var  FS : Set{Function} .
+  var  MS : MemoryStack .
+  var  MM : Memory .
+  var  N : Nat .
+  var  ES : ExecState .
+  var  S : Nat .
+  var  Sys : System .
+  var  Log : String .
+  vars DEs IEs : Set{EventName} .
+  vars Mc Nm : Name .
+
+  eq [[MId, Dice2, Active, Events, Events', CS, FS, DEs, IEs, MS <m| MM [lastFace -> N]] ES, S, Sys, Log] |= face(N) = true .
+  eq [[MId, Dice2, Active, Events, Events', CS, FS, DEs, IEs, MM [lastFace -> N]] ES, S, Sys, Log] |= face(N) = true .
+  eq [[MId, Mc, Nm, Events, Events', CS, FS, DEs, IEs, MS] ES, S, Sys, Log] |= state(Mc, Nm) = true .
+endm
+
+mod DICE-ABSTRACTION is 
+  inc DICE-PREDS .
+
+  var  MId : MachId .
+  vars Ev : Event .
+  vars Events Events' Events'' : Queue{Event} .
+  var  CS : CodeStack .
+  var  FS : Set{Function} .
+  var  MS : MemoryStack .
+  var  MM : Memory .
+  var  ES : ExecState .
+  var  S N V V' : Nat .
+  var  Sys : System .
+  var  Log : String .
+  var  M : Map{UniversalType,UniversalType} .
+  vars DEs IEs : Set{EventName} .
+
+  ---- the number of times each face has come up is reset
+ ceq [abstraction] :
+     [MId, Dice, Active, Events, Events', CS, FS, DEs, IEs, MS <m| MM [faces -> map{M}]]
+   = [MId, Dice, Active, Events, Events', CS, FS, DEs, IEs, MS <m| MM [faces -> map{fill(M, 0)}]]
+   if nonZeroValue(M) .
+
+   op fill : Map{UniversalType,UniversalType} UniversalType -> Map{UniversalType,UniversalType} .
+   eq fill((N |-> V, M), V') = (N |-> V', fill(M, V')) .
+   eq fill(empty, V) = empty .
+   op nonZeroValue : Map{UniversalType,UniversalType} -> Bool .
+   eq nonZeroValue((N |-> s V, M)) = true .
+   eq nonZeroValue(M) = false [owise] .
+endm
+
+---- search for a state in which face one is up
+search [1] 
+execute(tThrow2, init)
+=>*
+St:State 
+such that
+St:State |= face(1) 
+.
+
+frew [100] execute(tThrow2, init) .
+
+---- search for a state in which face one is up
+search [1,100] 
+execute(tThrow2, init) 
+=>*
+St:State 
+such that
+St:State |= face(1) 
+.
+
+mod DICE-CHECK is 
+  inc DICE-ABSTRACTION . 
+  inc MODEL-CHECKER .
+  inc LTL-SIMPLIFIER .  
+  var St : State .
+endm
+
+--- we can always reach a state in which one of the faces is up
+---- false: it can keep sending events
+red modelCheck(
+      execute(tThrow2, init), 
+      ([] <> (face(1) \/ face(2) \/ face(3) \/ face(4) \/ face(5) \/ face(6))) ) .
+
+      
